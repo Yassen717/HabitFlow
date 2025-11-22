@@ -1,0 +1,103 @@
+import React from 'react';
+import { Check, Trash2, Calendar, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+interface Habit {
+    id: string;
+    title: string;
+    description: string | null;
+    frequency: string;
+    logs: any[];
+}
+
+interface HabitCardProps {
+    habit: Habit;
+    onCheckIn: (id: string) => void;
+    onDelete: (id: string) => void;
+}
+
+const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete }) => {
+    const isCompletedToday = habit.logs.some((log) => {
+        const logDate = new Date(log.date).toDateString();
+        const today = new Date().toDateString();
+        return logDate === today;
+    });
+
+    const streak = habit.logs.length;
+    const completionRate = habit.logs.length > 0 ? 100 : 0;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+            className="group glass-card card-hover relative overflow-hidden rounded-2xl p-6"
+        >
+            {/* Header */}
+            <div className="mb-4 flex items-start justify-between">
+                <div className="flex-1">
+                    <h3 className="mb-1 font-['Space_Grotesk'] text-lg font-bold text-slate-900">{habit.title}</h3>
+                    {habit.description && (
+                        <p className="text-sm text-slate-600">{habit.description}</p>
+                    )}
+                </div>
+
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => onDelete(habit.id)}
+                    className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                >
+                    <Trash2 size={16} />
+                </motion.button>
+            </div>
+
+            {/* Stats Row */}
+            <div className="mb-4 flex items-center gap-3">
+                <div className="flex items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5">
+                    <Calendar size={14} className="text-sky-600" />
+                    <span className="text-xs font-semibold text-sky-700">{habit.frequency}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5">
+                    <TrendingUp size={14} className="text-indigo-600" />
+                    <span className="text-xs font-semibold text-indigo-700">{streak} days</span>
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+                <div className="mb-2 flex items-center justify-between text-xs">
+                    <span className="font-medium text-slate-600">Completion</span>
+                    <span className="font-semibold text-slate-900">{completionRate}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${completionRate}%` }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="h-full bg-gradient-to-r from-sky-500 to-indigo-600"
+                    />
+                </div>
+            </div>
+
+            {/* Action Button */}
+            <motion.button
+                whileHover={{ scale: isCompletedToday ? 1 : 1.02 }}
+                whileTap={{ scale: isCompletedToday ? 1 : 0.98 }}
+                onClick={() => !isCompletedToday && onCheckIn(habit.id)}
+                disabled={isCompletedToday}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition-all ${isCompletedToday
+                        ? 'cursor-not-allowed bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30'
+                        : 'btn-primary'
+                    }`}
+            >
+                <Check size={18} />
+                {isCompletedToday ? 'Completed Today' : 'Mark Complete'}
+            </motion.button>
+        </motion.div>
+    );
+};
+
+export default HabitCard;
