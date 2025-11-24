@@ -1,0 +1,224 @@
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { User, Mail, Award, Calendar, Edit2, Save, X, ArrowLeft } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+
+const Profile: React.FC = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [isEditing, setIsEditing] = useState(false);
+    const [name, setName] = useState(user?.name || '');
+    const [email, setEmail] = useState(user?.email || '');
+
+    const handleSave = () => {
+        toast.success('Profile updated successfully!', {
+            style: { background: '#1e293b', color: '#fff' },
+        });
+        setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+        setName(user?.name || '');
+        setEmail(user?.email || '');
+        setIsEditing(false);
+    };
+
+    const memberSince = new Date().toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+    });
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 p-6">
+            <Toaster position="top-right" />
+
+            <div className="mx-auto max-w-4xl">
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-8"
+                >
+                    <div className="mb-4">
+                        <motion.button
+                            whileHover={{ scale: 1.05, x: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/dashboard')}
+                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-white/50 hover:text-slate-900"
+                        >
+                            <ArrowLeft size={18} />
+                            Back to Dashboard
+                        </motion.button>
+                    </div>
+                    <h1 className="mb-2 font-['Space_Grotesk'] text-3xl font-bold text-slate-900">
+                        Profile Settings
+                    </h1>
+                    <p className="text-slate-600">Manage your account information and preferences</p>
+                </motion.div>
+
+                <div className="grid gap-6 lg:grid-cols-3">
+                    {/* Profile Card */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="lg:col-span-2"
+                    >
+                        <div className="glass-card rounded-2xl p-8 shadow-premium">
+                            <div className="mb-6 flex items-center justify-between">
+                                <h2 className="font-['Space_Grotesk'] text-xl font-bold text-slate-900">
+                                    Personal Information
+                                </h2>
+                                {!isEditing ? (
+                                    <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => setIsEditing(true)}
+                                        className="btn-secondary flex items-center gap-2 rounded-xl px-4 py-2 text-sm"
+                                    >
+                                        <Edit2 size={16} />
+                                        Edit Profile
+                                    </motion.button>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={handleCancel}
+                                            className="flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                                        >
+                                            <X size={16} />
+                                            Cancel
+                                        </motion.button>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={handleSave}
+                                            className="btn-primary flex items-center gap-2 rounded-xl px-4 py-2 text-sm"
+                                        >
+                                            <Save size={16} />
+                                            Save Changes
+                                        </motion.button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Avatar */}
+                                <div className="flex items-center gap-6">
+                                    <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-3xl font-bold text-white">
+                                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                    <div>
+                                        <h3 className="mb-1 font-['Space_Grotesk'] text-2xl font-bold text-slate-900">
+                                            {user?.name || 'User'}
+                                        </h3>
+                                        <p className="text-sm text-slate-600">Member since {memberSince}</p>
+                                    </div>
+                                </div>
+
+                                {/* Name Field */}
+                                <div>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                                        Full Name
+                                    </label>
+                                    <div className="relative">
+                                        <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            disabled={!isEditing}
+                                            className={`w-full rounded-xl border-2 bg-white py-3 pl-12 pr-4 text-slate-900 transition-all ${isEditing
+                                                ? 'border-slate-200 focus:border-sky-500 focus:outline-none focus:ring-4 focus:ring-sky-500/10'
+                                                : 'border-slate-100 bg-slate-50 cursor-not-allowed'
+                                                }`}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Email Field */}
+                                <div>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                                        Email Address
+                                    </label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            disabled={!isEditing}
+                                            className={`w-full rounded-xl border-2 bg-white py-3 pl-12 pr-4 text-slate-900 transition-all ${isEditing
+                                                ? 'border-slate-200 focus:border-sky-500 focus:outline-none focus:ring-4 focus:ring-sky-500/10'
+                                                : 'border-slate-100 bg-slate-50 cursor-not-allowed'
+                                                }`}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Stats Sidebar */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="space-y-4"
+                    >
+                        {/* Points Card */}
+                        <div className="glass-card rounded-2xl p-6 shadow-premium">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                                <Award className="h-6 w-6 text-white" />
+                            </div>
+                            <div className="mb-1 text-sm font-semibold text-slate-600">Total Points</div>
+                            <div className="font-['Space_Grotesk'] text-4xl font-bold text-slate-900">
+                                {user?.points || 0}
+                            </div>
+                            <p className="mt-2 text-xs text-slate-500">Keep building those habits! 🎯</p>
+                        </div>
+
+                        {/* Membership Card */}
+                        <div className="glass-card rounded-2xl p-6 shadow-premium">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500">
+                                <Calendar className="h-6 w-6 text-white" />
+                            </div>
+                            <div className="mb-1 text-sm font-semibold text-slate-600">Member Since</div>
+                            <div className="font-['Space_Grotesk'] text-lg font-bold text-slate-900">
+                                {memberSince}
+                            </div>
+                        </div>
+
+                        {/* Achievement Preview */}
+                        <div className="glass-card rounded-2xl p-6 shadow-premium">
+                            <h3 className="mb-4 font-['Space_Grotesk'] text-lg font-bold text-slate-900">
+                                Recent Achievements
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="text-2xl">🏆</div>
+                                    <div>
+                                        <div className="text-sm font-semibold text-slate-900">First Habit</div>
+                                        <div className="text-xs text-slate-500">Created your first habit</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="text-2xl">🔥</div>
+                                    <div>
+                                        <div className="text-sm font-semibold text-slate-900">Consistency</div>
+                                        <div className="text-xs text-slate-500">3 day streak</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Profile;

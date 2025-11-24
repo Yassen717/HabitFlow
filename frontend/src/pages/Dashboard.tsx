@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import HabitCard from '../components/HabitCard';
 import CreateHabitModal from '../components/CreateHabitModal';
 import ProgressChart from '../components/ProgressChart';
-import { Plus, LogOut, TrendingUp, Target, Zap, Award, LayoutGrid } from 'lucide-react';
+import { Plus, LogOut, TrendingUp, Target, Zap, Award, LayoutGrid, User, Info, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -23,6 +23,7 @@ const Dashboard: React.FC = () => {
     const [habits, setHabits] = useState<Habit[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState('dashboard');
 
     useEffect(() => {
         fetchHabits();
@@ -101,6 +102,12 @@ const Dashboard: React.FC = () => {
         })
     ).length;
 
+    const navItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
+        { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
+        { id: 'about', label: 'About', icon: Info, path: '/about' },
+    ];
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
             <Toaster position="top-right" />
@@ -109,14 +116,33 @@ const Dashboard: React.FC = () => {
             <div className="glass-panel sticky top-0 z-40 border-b border-slate-200/50">
                 <div className="mx-auto max-w-7xl px-6 py-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600">
-                                <TrendingUp className="h-5 w-5 text-white" />
+                        <div className="flex items-center gap-8">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600">
+                                    <TrendingUp className="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="font-['Space_Grotesk'] text-xl font-bold text-slate-900">HabitFlow</h1>
+                                    <p className="text-xs text-slate-600">Dashboard</p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="font-['Space_Grotesk'] text-xl font-bold text-slate-900">HabitFlow</h1>
-                                <p className="text-xs text-slate-600">Dashboard</p>
-                            </div>
+
+                            {/* Navigation Links */}
+                            <nav className="hidden items-center gap-2 md:flex">
+                                {navItems.map((item) => (
+                                    <Link
+                                        key={item.id}
+                                        to={item.path}
+                                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${currentPage === item.id
+                                                ? 'bg-sky-50 text-sky-700'
+                                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                            }`}
+                                    >
+                                        <item.icon size={16} />
+                                        {item.label}
+                                    </Link>
+                                ))}
+                            </nav>
                         </div>
 
                         <div className="flex items-center gap-3">
