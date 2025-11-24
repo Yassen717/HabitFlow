@@ -34,7 +34,11 @@ const Dashboard: React.FC = () => {
             const response = await axios.get('http://localhost:3000/api/habits', {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setHabits(response.data);
+            setHabits(response.data.habits || response.data);
+            // Update user points in auth context if available
+            if (response.data.userPoints !== undefined && user) {
+                user.points = response.data.userPoints;
+            }
         } catch (error) {
             console.error('Error fetching habits:', error);
             toast.error('Failed to load habits');
@@ -60,9 +64,13 @@ const Dashboard: React.FC = () => {
 
     const handleCheckIn = async (id: string) => {
         try {
-            await axios.post(`http://localhost:3000/api/habits/${id}/log`, {}, {
+            const response = await axios.post(`http://localhost:3000/api/habits/${id}/log`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            // Update user points if available in response
+            if (response.data.userPoints !== undefined && user) {
+                user.points = response.data.userPoints;
+            }
             toast.success('+10 points earned!', {
                 icon: '🎯',
                 style: { background: '#1e293b', color: '#fff' },
@@ -134,8 +142,8 @@ const Dashboard: React.FC = () => {
                                         key={item.id}
                                         to={item.path}
                                         className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${currentPage === item.id
-                                                ? 'bg-sky-50 text-sky-700'
-                                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                            ? 'bg-sky-50 text-sky-700'
+                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                                             }`}
                                     >
                                         <item.icon size={16} />

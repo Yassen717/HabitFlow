@@ -9,11 +9,17 @@ interface AuthRequest extends Request {
 
 export const getHabits = async (req: AuthRequest, res: Response) => {
     try {
-        const habits = await prisma.habit.findMany({
-            where: { userId: req.user.userId },
-            include: { logs: true },
-        });
-        res.json(habits);
+        const [habits, user] = await Promise.all([
+            prisma.habit.findMany({
+                where: { userId: req.user.userId },
+                include: { logs: true },
+            }),
+            prisma.user.findUnique({
+                where: { id: req.user.userId },
+                select: { points: true },
+            }),
+        ]);
+        res.json({ habits, userPoints: user?.points || 0 });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching habits' });
     }
@@ -59,12 +65,13 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
         });
 
         // Update user points
-        await prisma.user.update({
+        const updatedUser = await prisma.user.update({
             where: { id: req.user.userId },
             data: { points: { increment: 10 } },
+            select: { points: true },
         });
 
-        res.json(log);
+        res.json({ log, userPoints: updatedUser.points });
     } catch (error) {
         res.status(500).json({ message: 'Error logging habit' });
     }
