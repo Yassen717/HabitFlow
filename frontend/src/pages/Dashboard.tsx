@@ -18,7 +18,7 @@ interface Habit {
 }
 
 const Dashboard: React.FC = () => {
-    const { user, logout, token } = useAuth();
+    const { user, logout, token, updateUser } = useAuth();
     const navigate = useNavigate();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,8 +36,8 @@ const Dashboard: React.FC = () => {
             });
             setHabits(response.data.habits || response.data);
             // Update user points in auth context if available
-            if (response.data.userPoints !== undefined && user) {
-                user.points = response.data.userPoints;
+            if (response.data.userPoints !== undefined) {
+                updateUser({ points: response.data.userPoints });
             }
         } catch (error) {
             console.error('Error fetching habits:', error);
@@ -68,8 +68,8 @@ const Dashboard: React.FC = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             // Update user points if available in response
-            if (response.data.userPoints !== undefined && user) {
-                user.points = response.data.userPoints;
+            if (response.data.userPoints !== undefined) {
+                updateUser({ points: response.data.userPoints });
             }
             toast.success('+10 points earned!', {
                 icon: '🎯',

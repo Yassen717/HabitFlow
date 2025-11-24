@@ -21,6 +21,7 @@ export const getHabits = async (req: AuthRequest, res: Response) => {
         ]);
         res.json({ habits, userPoints: user?.points || 0 });
     } catch (error) {
+        console.error('Error fetching habits:', error);
         res.status(500).json({ message: 'Error fetching habits' });
     }
 };
@@ -38,6 +39,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
         });
         res.status(201).json(habit);
     } catch (error) {
+        console.error('Error creating habit:', error);
         res.status(500).json({ message: 'Error creating habit' });
     }
 };
