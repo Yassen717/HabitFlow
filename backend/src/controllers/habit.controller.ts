@@ -9,17 +9,38 @@ interface AuthRequest extends Request {
 
 export const getHabits = async (req: AuthRequest, res: Response) => {
     try {
-        const [habits, user] = await Promise.all([
+        // Parse pagination parameters with defaults
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
+
+        const [habits, totalCount, user] = await Promise.all([
             prisma.habit.findMany({
                 where: { userId: req.user.userId },
                 include: { logs: true },
+                skip: skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+            }),
+            prisma.habit.count({
+                where: { userId: req.user.userId },
             }),
             prisma.user.findUnique({
                 where: { id: req.user.userId },
                 select: { points: true },
             }),
         ]);
-        res.json({ habits, userPoints: user?.points || 0 });
+
+        res.json({
+            habits,
+            userPoints: user?.points || 0,
+            pagination: {
+                page,
+                limit,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+            },
+        });
     } catch (error) {
         console.error('Error fetching habits:', error);
         res.status(500).json({ message: 'Error fetching habits' });
