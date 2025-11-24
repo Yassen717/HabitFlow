@@ -114,11 +114,26 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
 export const deleteHabit = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     try {
+        // Check if habit exists and belongs to user
+        const habit = await prisma.habit.findUnique({
+            where: { id },
+        });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        }
+
+        if (habit.userId !== req.user.userId) {
+            return res.status(403).json({ message: 'You do not have permission to delete this habit' });
+        }
+
         await prisma.habit.delete({
             where: { id },
         });
-        res.json({ message: 'Habit deleted' });
+
+        res.json({ message: 'Habit deleted successfully' });
     } catch (error) {
+        console.error('Error deleting habit:', error);
         res.status(500).json({ message: 'Error deleting habit' });
     }
 };
@@ -126,6 +141,33 @@ export const deleteHabit = async (req: AuthRequest, res: Response) => {
 export const logHabit = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     try {
+        // Check if habit exists and belongs to user
+        const habit = await prisma.habit.findUnique({
+            where: { id },
+            include: { logs: true },
+        });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        }
+
+        if (habit.userId !== req.user.userId) {
+            return res.status(403).json({ message: 'You do not have permission to log this habit' });
+        }
+
+        // Check if habit was already logged today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const alreadyLoggedToday = habit.logs.some(log => {
+            const logDate = new Date(log.date);
+            logDate.setHours(0, 0, 0, 0);
+            return logDate.getTime() === today.getTime();
+        });
+
+        if (alreadyLoggedToday) {
+            return res.status(400).json({ message: 'Habit already logged for today' });
+        }
+
         const log = await prisma.log.create({
             data: {
                 habitId: id,
@@ -140,8 +182,13 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
             select: { points: true },
         });
 
-        res.json({ log, userPoints: updatedUser.points });
+        res.json({
+            log,
+            userPoints: updatedUser.points,
+            message: 'Habit logged successfully! +10 points'
+        });
     } catch (error) {
+        console.error('Error logging habit:', error);
         res.status(500).json({ message: 'Error logging habit' });
     }
 };

@@ -27,9 +27,14 @@ export const register = async (req: Request, res: Response) => {
             expiresIn: '1h',
         });
 
-        res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name } });
+        res.status(201).json({
+            token,
+            user: { id: user.id, email: user.email, name: user.name, points: user.points },
+            message: 'Registration successful'
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Something went wrong' });
+        console.error('Error during registration:', error);
+        res.status(500).json({ message: 'Error creating account. Please try again.' });
     }
 };
 
@@ -51,8 +56,13 @@ export const login = async (req: Request, res: Response) => {
             expiresIn: '1h',
         });
 
-        res.status(200).json({ token, user: { id: user.id, email: user.email, name: user.name } });
+        res.status(200).json({
+            token,
+            user: { id: user.id, email: user.email, name: user.name, points: user.points },
+            message: 'Login successful'
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Something went wrong' });
+        console.error('Error during login:', error);
+        res.status(500).json({ message: 'Error logging in. Please try again.' });
     }
 };
