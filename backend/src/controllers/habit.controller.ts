@@ -7,6 +7,46 @@ interface AuthRequest extends Request {
     user?: any;
 }
 
+// Helper function to calculate streak
+const calculateStreak = (logs: any[]): number => {
+    if (logs.length === 0) return 0;
+
+    // Sort logs by date descending
+    const sortedLogs = logs
+        .map(log => new Date(log.date))
+        .sort((a, b) => b.getTime() - a.getTime());
+
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Check if there's a log for today or yesterday
+    const lastLogDate = new Date(sortedLogs[0]);
+    lastLogDate.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.floor((today.getTime() - lastLogDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // If last log is more than 1 day ago, streak is broken
+    if (diffDays > 1) return 0;
+
+    // Calculate streak by checking consecutive days
+    let expectedDate = new Date(lastLogDate);
+    for (const logDate of sortedLogs) {
+        const currentDate = new Date(logDate);
+        currentDate.setHours(0, 0, 0, 0);
+
+        if (currentDate.getTime() === expectedDate.getTime()) {
+            streak++;
+            expectedDate.setDate(expectedDate.getDate() - 1);
+        } else if (currentDate.getTime() < expectedDate.getTime()) {
+            break;
+        }
+    }
+
+    return streak;
+};
+
+
 export const getHabits = async (req: AuthRequest, res: Response) => {
     try {
         // Parse pagination parameters with defaults
@@ -31,8 +71,14 @@ export const getHabits = async (req: AuthRequest, res: Response) => {
             }),
         ]);
 
+        // Add streak calculation to each habit
+        const habitsWithStreak = habits.map(habit => ({
+            ...habit,
+            streak: calculateStreak(habit.logs),
+        }));
+
         res.json({
-            habits,
+            habits: habitsWithStreak,
             userPoints: user?.points || 0,
             pagination: {
                 page,
