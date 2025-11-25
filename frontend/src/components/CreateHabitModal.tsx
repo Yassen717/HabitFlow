@@ -6,20 +6,21 @@ interface CreateHabitModalProps {
     isOpen: boolean;
     onClose: () => void;
     onCreate: (habit: { title: string; description: string; frequency: string }) => void;
+    isLoading?: boolean;
 }
 
-const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onClose, onCreate }) => {
+const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onClose, onCreate, isLoading = false }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [frequency, setFrequency] = useState('daily');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isLoading) return;
         onCreate({ title, description, frequency });
         setTitle('');
         setDescription('');
         setFrequency('daily');
-        onClose();
     };
 
     return (
@@ -110,12 +111,13 @@ const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onClose, on
                                         Cancel
                                     </motion.button>
                                     <motion.button
-                                        whileHover={{ scale: 1.01 }}
-                                        whileTap={{ scale: 0.99 }}
+                                        whileHover={{ scale: isLoading ? 1 : 1.01 }}
+                                        whileTap={{ scale: isLoading ? 1 : 0.99 }}
                                         type="submit"
-                                        className="btn-primary flex-1 rounded-xl px-6 py-3"
+                                        disabled={isLoading}
+                                        className="btn-primary flex-1 rounded-xl px-6 py-3 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                        Create Habit
+                                        {isLoading ? 'Creating...' : 'Create Habit'}
                                     </motion.button>
                                 </div>
                             </form>

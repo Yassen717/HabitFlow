@@ -5,6 +5,7 @@ import axios from 'axios';
 import HabitCard from '../components/HabitCard';
 import CreateHabitModal from '../components/CreateHabitModal';
 import ProgressChart from '../components/ProgressChart';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { Plus, LogOut, TrendingUp, Target, Zap, Award, LayoutGrid, User, Info, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
@@ -23,6 +24,8 @@ const Dashboard: React.FC = () => {
     const [habits, setHabits] = useState<Habit[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isCreating, setIsCreating] = useState(false);
+    const [processingHabitId, setProcessingHabitId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState('dashboard');
 
     useEffect(() => {
@@ -48,6 +51,7 @@ const Dashboard: React.FC = () => {
     };
 
     const handleCreateHabit = async (habitData: { title: string; description: string; frequency: string }) => {
+        setIsCreating(true);
         try {
             await axios.post('http://localhost:3000/api/habits', habitData, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -55,14 +59,18 @@ const Dashboard: React.FC = () => {
             toast.success('Habit created successfully', {
                 style: { background: '#1e293b', color: '#fff' },
             });
+            setIsModalOpen(false);
             fetchHabits();
         } catch (error) {
             console.error('Error creating habit:', error);
             toast.error('Failed to create habit');
+        } finally {
+            setIsCreating(false);
         }
     };
 
     const handleCheckIn = async (id: string) => {
+        setProcessingHabitId(id);
         try {
             const response = await axios.post(`http://localhost:3000/api/habits/${id}/log`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -79,11 +87,14 @@ const Dashboard: React.FC = () => {
         } catch (error) {
             console.error('Error checking in:', error);
             toast.error('Failed to check in');
+        } finally {
+            setProcessingHabitId(null);
         }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this habit?')) return;
+        setProcessingHabitId(id);
         try {
             await axios.delete(`http://localhost:3000/api/habits/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -93,6 +104,8 @@ const Dashboard: React.FC = () => {
         } catch (error) {
             console.error('Error deleting habit:', error);
             toast.error('Failed to delete habit');
+        } finally {
+            setProcessingHabitId(null);
         }
     };
 
@@ -252,7 +265,7 @@ const Dashboard: React.FC = () => {
 
                     {isLoading ? (
                         <div className="flex h-64 items-center justify-center">
-                            <div className="h-12 w-12 animate-spin rounded-full border-4 border-sky-500 border-t-transparent"></div>
+                            <LoadingSpinner size="lg" />
                         </div>
                     ) : habits.length > 0 ? (
                         <motion.div
@@ -273,6 +286,7 @@ const Dashboard: React.FC = () => {
                                     habit={habit}
                                     onCheckIn={handleCheckIn}
                                     onDelete={handleDelete}
+                                    isProcessing={processingHabitId === habit.id}
                                 />
                             ))}
                         </motion.div>
@@ -305,6 +319,7 @@ const Dashboard: React.FC = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onCreate={handleCreateHabit}
+                isLoading={isCreating}
             />
         </div>
     );

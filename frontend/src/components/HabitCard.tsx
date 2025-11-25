@@ -3,22 +3,10 @@ import { Check, Trash2, Calendar, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Habit {
-    id: string;
-    title: string;
-    description: string | null;
-    frequency: string;
-    logs: any[];
-    streak?: number; // Backend provides this
-    createdAt?: string;
+    isProcessing?: boolean;
 }
 
-interface HabitCardProps {
-    habit: Habit;
-    onCheckIn: (id: string) => void;
-    onDelete: (id: string) => void;
-}
-
-const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete }) => {
+const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete, isProcessing = false }) => {
     const isCompletedToday = habit.logs.some((log) => {
         const logDate = new Date(log.date).toDateString();
         const today = new Date().toDateString();
@@ -109,17 +97,19 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete }) => 
 
             {/* Action Button */}
             <motion.button
-                whileHover={{ scale: isCompletedToday ? 1 : 1.02 }}
-                whileTap={{ scale: isCompletedToday ? 1 : 0.98 }}
-                onClick={() => !isCompletedToday && onCheckIn(habit.id)}
-                disabled={isCompletedToday}
+                whileHover={{ scale: isCompletedToday || isProcessing ? 1 : 1.02 }}
+                whileTap={{ scale: isCompletedToday || isProcessing ? 1 : 0.98 }}
+                onClick={() => !isCompletedToday && !isProcessing && onCheckIn(habit.id)}
+                disabled={isCompletedToday || isProcessing}
                 className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition-all ${isCompletedToday
                     ? 'cursor-not-allowed bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30'
-                    : 'btn-primary'
+                    : isProcessing
+                        ? 'cursor-wait opacity-60 btn-primary'
+                        : 'btn-primary'
                     }`}
             >
                 <Check size={18} />
-                {isCompletedToday ? 'Completed Today' : 'Mark Complete'}
+                {isCompletedToday ? 'Completed Today' : isProcessing ? 'Processing...' : 'Mark Complete'}
             </motion.button>
         </motion.div>
     );
