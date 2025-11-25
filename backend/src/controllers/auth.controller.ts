@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import logger from '../lib/logger';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -31,7 +32,7 @@ export const register = async (req: Request, res: Response) => {
             message: 'Registration successful'
         });
     } catch (error) {
-        console.error('Error during registration:', error);
+        logger.error('Error during registration:', error);
         res.status(500).json({ message: 'Error creating account. Please try again.' });
     }
 };
@@ -60,7 +61,7 @@ export const login = async (req: Request, res: Response) => {
             message: 'Login successful'
         });
     } catch (error) {
-        console.error('Error during login:', error);
+        logger.error('Error during login:', error);
         res.status(500).json({ message: 'Error logging in. Please try again.' });
     }
 };

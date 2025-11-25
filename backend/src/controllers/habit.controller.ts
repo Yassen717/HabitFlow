@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import logger from '../lib/logger';
 
 interface AuthRequest extends Request {
     user?: any;
@@ -86,7 +87,7 @@ export const getHabits = async (req: AuthRequest, res: Response) => {
             },
         });
     } catch (error) {
-        console.error('Error fetching habits:', error);
+        logger.error('Error fetching habits:', error);
         res.status(500).json({ message: 'Error fetching habits' });
     }
 };
@@ -104,7 +105,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
         });
         res.status(201).json(habit);
     } catch (error) {
-        console.error('Error creating habit:', error);
+        logger.error('Error creating habit:', error);
         res.status(500).json({ message: 'Error creating habit' });
     }
 };
@@ -131,7 +132,7 @@ export const deleteHabit = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Habit deleted successfully' });
     } catch (error) {
-        console.error('Error deleting habit:', error);
+        logger.error('Error deleting habit:', error);
         res.status(500).json({ message: 'Error deleting habit' });
     }
 };
@@ -186,7 +187,7 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
             message: 'Habit logged successfully! +10 points'
         });
     } catch (error) {
-        console.error('Error logging habit:', error);
+        logger.error('Error logging habit:', error);
         res.status(500).json({ message: 'Error logging habit' });
     }
 };
