@@ -8,6 +8,8 @@ interface Habit {
     description: string | null;
     frequency: string;
     logs: any[];
+    streak?: number; // Backend provides this
+    createdAt?: string;
 }
 
 interface HabitCardProps {
@@ -23,8 +25,31 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete }) => 
         return logDate === today;
     });
 
-    const streak = habit.logs.length;
-    const completionRate = habit.logs.length > 0 ? 100 : 0;
+    // Use backend-calculated streak
+    const streak = habit.streak ?? 0;
+
+    // Calculate proper completion rate based on frequency
+    const calculateCompletionRate = (): number => {
+        if (!habit.createdAt || habit.logs.length === 0) return 0;
+
+        const created = new Date(habit.createdAt);
+        const today = new Date();
+        const daysSinceCreation = Math.floor((today.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+        if (habit.frequency === 'daily') {
+            // For daily habits, compare completions to days since creation
+            const expectedCompletions = Math.max(1, daysSinceCreation);
+            return Math.min(100, Math.round((habit.logs.length / expectedCompletions) * 100));
+        } else if (habit.frequency === 'weekly') {
+            // For weekly habits, calculate weeks since creation
+            const weeksSinceCreation = Math.max(1, Math.ceil(daysSinceCreation / 7));
+            return Math.min(100, Math.round((habit.logs.length / weeksSinceCreation) * 100));
+        }
+
+        return habit.logs.length > 0 ? 100 : 0;
+    };
+
+    const completionRate = calculateCompletionRate();
 
     return (
         <motion.div
@@ -89,8 +114,8 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete }) => 
                 onClick={() => !isCompletedToday && onCheckIn(habit.id)}
                 disabled={isCompletedToday}
                 className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition-all ${isCompletedToday
-                        ? 'cursor-not-allowed bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30'
-                        : 'btn-primary'
+                    ? 'cursor-not-allowed bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30'
+                    : 'btn-primary'
                     }`}
             >
                 <Check size={18} />
