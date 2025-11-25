@@ -3,6 +3,19 @@ import { Check, Trash2, Calendar, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Habit {
+    id: string;
+    title: string;
+    description: string | null;
+    frequency: string;
+    logs: any[];
+    streak?: number; // Backend provides this
+    createdAt?: string;
+}
+
+interface HabitCardProps {
+    habit: Habit;
+    onCheckIn: (id: string) => void;
+    onDelete: (id: string) => void;
     isProcessing?: boolean;
 }
 
