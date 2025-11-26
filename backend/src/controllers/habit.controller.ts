@@ -110,6 +110,47 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const updateHabit = async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { title, description, frequency } = req.body;
+    try {
+        // Check if habit exists and belongs to user
+        const habit = await prisma.habit.findUnique({
+            where: { id },
+        });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        }
+
+        if (habit.userId !== req.user.userId) {
+            return res.status(403).json({ message: 'You do not have permission to update this habit' });
+        }
+
+        // Update the habit
+        const updatedHabit = await prisma.habit.update({
+            where: { id },
+            data: {
+                title,
+                description,
+                frequency,
+            },
+            include: { logs: true },
+        });
+
+        // Add streak calculation
+        const habitWithStreak = {
+            ...updatedHabit,
+            streak: calculateStreak(updatedHabit.logs),
+        };
+
+        res.json(habitWithStreak);
+    } catch (error) {
+        logger.error('Error updating habit:', error);
+        res.status(500).json({ message: 'Error updating habit' });
+    }
+};
+
 export const deleteHabit = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     try {

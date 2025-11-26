@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import HabitCard from '../components/HabitCard';
 import CreateHabitModal from '../components/CreateHabitModal';
+import EditHabitModal from '../components/EditHabitModal';
 import ProgressChart from '../components/ProgressChart';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Plus, LogOut, TrendingUp, Target, Zap, Award, LayoutGrid, User, Info, Home } from 'lucide-react';
@@ -23,8 +24,11 @@ const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
     const [processingHabitId, setProcessingHabitId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState('dashboard');
 
@@ -66,6 +70,31 @@ const Dashboard: React.FC = () => {
             toast.error('Failed to create habit');
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handleEditHabit = (habit: Habit) => {
+        setEditingHabit(habit);
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateHabit = async (id: string, habitData: { title: string; description: string; frequency: string }) => {
+        setIsUpdating(true);
+        try {
+            await axios.put(`http://localhost:3000/api/habits/${id}`, habitData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            toast.success('Habit updated successfully', {
+                style: { background: '#1e293b', color: '#fff' },
+            });
+            setIsEditModalOpen(false);
+            setEditingHabit(null);
+            fetchHabits();
+        } catch (error) {
+            console.error('Error updating habit:', error);
+            toast.error('Failed to update habit');
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -285,6 +314,7 @@ const Dashboard: React.FC = () => {
                                     key={habit.id}
                                     habit={habit}
                                     onCheckIn={handleCheckIn}
+                                    onEdit={handleEditHabit}
                                     onDelete={handleDelete}
                                     isProcessing={processingHabitId === habit.id}
                                 />
@@ -320,6 +350,17 @@ const Dashboard: React.FC = () => {
                 onClose={() => setIsModalOpen(false)}
                 onCreate={handleCreateHabit}
                 isLoading={isCreating}
+            />
+
+            <EditHabitModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditingHabit(null);
+                }}
+                onUpdate={handleUpdateHabit}
+                habit={editingHabit}
+                isLoading={isUpdating}
             />
         </div>
     );

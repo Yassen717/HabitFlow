@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getHabits, createHabit, deleteHabit, logHabit } from '../controllers/habit.controller';
+import { getHabits, createHabit, updateHabit, deleteHabit, logHabit } from '../controllers/habit.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 import { createHabitValidation } from '../middleware/validation.middleware';
 
@@ -9,6 +9,7 @@ router.use(authenticateToken);
 
 router.get('/', getHabits);
 router.post('/', createHabitValidation, createHabit);
+router.put('/:id', createHabitValidation, updateHabit);
 router.delete('/:id', deleteHabit);
 router.post('/:id/log', logHabit);
 

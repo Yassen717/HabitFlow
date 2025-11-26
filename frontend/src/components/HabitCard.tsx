@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Trash2, Calendar, TrendingUp } from 'lucide-react';
+import { Check, Trash2, Calendar, TrendingUp, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Habit {
@@ -15,11 +15,12 @@ interface Habit {
 interface HabitCardProps {
     habit: Habit;
     onCheckIn: (id: string) => void;
+    onEdit: (habit: Habit) => void;
     onDelete: (id: string) => void;
     isProcessing?: boolean;
 }
 
-const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete, isProcessing = false }) => {
+const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onEdit, onDelete, isProcessing = false }) => {
     const isCompletedToday = habit.logs.some((log) => {
         const logDate = new Date(log.date).toDateString();
         const today = new Date().toDateString();
@@ -69,14 +70,26 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onDelete, isPro
                     )}
                 </div>
 
-                <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => onDelete(habit.id)}
-                    className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                >
-                    <Trash2 size={16} />
-                </motion.button>
+                <div className="flex gap-1">
+                    <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => onEdit(habit)}
+                        className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                        title="Edit habit"
+                    >
+                        <Pencil size={16} />
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => onDelete(habit.id)}
+                        className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        title="Delete habit"
+                    >
+                        <Trash2 size={16} />
+                    </motion.button>
+                </div>
             </div>
 
             {/* Stats Row */}
