@@ -5,6 +5,7 @@ import axios from 'axios';
 import HabitCard from '../components/HabitCard';
 import CreateHabitModal from '../components/CreateHabitModal';
 import EditHabitModal from '../components/EditHabitModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressChart from '../components/ProgressChart';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Plus, LogOut, TrendingUp, Target, Zap, Award, LayoutGrid, User, Info, Home } from 'lucide-react';
@@ -25,10 +26,13 @@ const Dashboard: React.FC = () => {
     const [habits, setHabits] = useState<Habit[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+    const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [processingHabitId, setProcessingHabitId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState('dashboard');
 
@@ -121,20 +125,27 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this habit?')) return;
-        setProcessingHabitId(id);
+    const handleDelete = (id: string) => {
+        setHabitToDelete(id);
+        setIsConfirmDeleteOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!habitToDelete) return;
+        setIsDeleting(true);
         try {
-            await axios.delete(`http://localhost:3000/api/habits/${id}`, {
+            await axios.delete(`http://localhost:3000/api/habits/${habitToDelete}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            toast.success('Habit deleted');
+            toast.success('Habit deleted successfully');
             fetchHabits();
+            setIsConfirmDeleteOpen(false);
+            setHabitToDelete(null);
         } catch (error) {
             console.error('Error deleting habit:', error);
             toast.error('Failed to delete habit');
         } finally {
-            setProcessingHabitId(null);
+            setIsDeleting(false);
         }
     };
 
@@ -361,6 +372,21 @@ const Dashboard: React.FC = () => {
                 onUpdate={handleUpdateHabit}
                 habit={editingHabit}
                 isLoading={isUpdating}
+            />
+
+            <ConfirmDialog
+                isOpen={isConfirmDeleteOpen}
+                onClose={() => {
+                    setIsConfirmDeleteOpen(false);
+                    setHabitToDelete(null);
+                }}
+                onConfirm={confirmDelete}
+                title="Delete Habit"
+                message="Are you sure you want to delete this habit? This action cannot be undone and all progress will be lost."
+                confirmText="Delete"
+                cancelText="Cancel"
+                isLoading={isDeleting}
+                type="danger"
             />
         </div>
     );
