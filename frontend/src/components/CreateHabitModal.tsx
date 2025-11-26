@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { CreateHabitData } from '../types';
 
 interface CreateHabitModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (habit: { title: string; description: string; frequency: string }) => void;
+    onCreate: (habit: CreateHabitData) => void;
     isLoading?: boolean;
 }
 

@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { JwtPayload } from '../types';
 
 interface AuthRequest extends Request {
-    user?: any;
+    user?: JwtPayload;
 }
 
 export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -13,11 +14,11 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
         return res.status(401).json({ message: 'Access token required' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET as string, (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET as string, (err, decoded) => {
         if (err) {
             return res.status(403).json({ message: 'Invalid token' });
         }
-        req.user = user;
+        req.user = decoded as JwtPayload;
         next();
     });
 };

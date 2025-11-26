@@ -1,16 +1,7 @@
 import React from 'react';
 import { Check, Trash2, Calendar, TrendingUp, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-interface Habit {
-    id: string;
-    title: string;
-    description: string | null;
-    frequency: string;
-    logs: any[];
-    streak?: number; // Backend provides this
-    createdAt?: string;
-}
+import type { Habit } from '../types';
 
 interface HabitCardProps {
     habit: Habit;

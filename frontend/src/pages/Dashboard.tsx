@@ -11,14 +11,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { Plus, LogOut, TrendingUp, Target, Zap, Award, LayoutGrid, User, Info, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
-
-interface Habit {
-    id: string;
-    title: string;
-    description: string | null;
-    frequency: string;
-    logs: any[];
-}
+import type { Habit, CreateHabitData, UpdateHabitData } from '../types';
 
 const Dashboard: React.FC = () => {
     const { user, logout, token, updateUser } = useAuth();
@@ -58,7 +51,7 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const handleCreateHabit = async (habitData: { title: string; description: string; frequency: string }) => {
+    const handleCreateHabit = async (habitData: CreateHabitData) => {
         setIsCreating(true);
         try {
             await axios.post('http://localhost:3000/api/habits', habitData, {
@@ -82,7 +75,7 @@ const Dashboard: React.FC = () => {
         setIsEditModalOpen(true);
     };
 
-    const handleUpdateHabit = async (id: string, habitData: { title: string; description: string; frequency: string }) => {
+    const handleUpdateHabit = async (id: string, habitData: UpdateHabitData) => {
         setIsUpdating(true);
         try {
             await axios.put(`http://localhost:3000/api/habits/${id}`, habitData, {

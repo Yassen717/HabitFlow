@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import logger from '../lib/logger';
+import { JwtPayload, Log } from '../types';
 
 interface AuthRequest extends Request {
-    user?: any;
+    user: JwtPayload; // Guaranteed by authenticateToken middleware
 }
 
 // Helper function to calculate streak
-const calculateStreak = (logs: any[]): number => {
+const calculateStreak = (logs: Log[]): number => {
     if (logs.length === 0) return 0;
 
     // Sort logs by date descending

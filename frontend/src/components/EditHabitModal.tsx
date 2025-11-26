@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Habit {
-    id: string;
-    title: string;
-    description: string | null;
-    frequency: string;
-}
+import type { Habit, UpdateHabitData } from '../types';
 
 interface EditHabitModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onUpdate: (id: string, habit: { title: string; description: string; frequency: string }) => void;
+    onUpdate: (id: string, habit: UpdateHabitData) => void;
     habit: Habit | null;
     isLoading?: boolean;
 }
