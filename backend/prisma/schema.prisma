@@ -31,6 +31,8 @@ model Habit {
   logs        Log[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Log {
@@ -39,4 +41,7 @@ model Log {
   habit     Habit    @relation(fields: [habitId], references: [id])
   date      DateTime @default(now()) // The date the habit was completed
   completed Boolean  @default(true)
+
+  @@index([habitId])
+  @@index([date])
 }

@@ -4,7 +4,7 @@ import logger from '../lib/logger';
 import { JwtPayload, Log } from '../types';
 
 interface AuthRequest extends Request {
-    user: JwtPayload; // Guaranteed by authenticateToken middleware
+    user?: JwtPayload; // Set by authenticateToken middleware
 }
 
 // Helper function to calculate streak
@@ -56,17 +56,17 @@ export const getHabits = async (req: AuthRequest, res: Response) => {
 
         const [habits, totalCount, user] = await Promise.all([
             prisma.habit.findMany({
-                where: { userId: req.user.userId },
+                where: { userId: req.user!.userId },
                 include: { logs: true },
                 skip: skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
             }),
             prisma.habit.count({
-                where: { userId: req.user.userId },
+                where: { userId: req.user!.userId },
             }),
             prisma.user.findUnique({
-                where: { id: req.user.userId },
+                where: { id: req.user!.userId },
                 select: { points: true },
             }),
         ]);
@@ -101,7 +101,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
                 title,
                 description,
                 frequency,
-                userId: req.user.userId,
+                userId: req.user!.userId,
             },
         });
         res.status(201).json(habit);
@@ -124,7 +124,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ message: 'Habit not found' });
         }
 
-        if (habit.userId !== req.user.userId) {
+        if (habit.userId !== req.user!.userId) {
             return res.status(403).json({ message: 'You do not have permission to update this habit' });
         }
 
@@ -164,7 +164,7 @@ export const deleteHabit = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ message: 'Habit not found' });
         }
 
-        if (habit.userId !== req.user.userId) {
+        if (habit.userId !== req.user!.userId) {
             return res.status(403).json({ message: 'You do not have permission to delete this habit' });
         }
 
@@ -192,7 +192,7 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ message: 'Habit not found' });
         }
 
-        if (habit.userId !== req.user.userId) {
+        if (habit.userId !== req.user!.userId) {
             return res.status(403).json({ message: 'You do not have permission to log this habit' });
         }
 
@@ -218,7 +218,7 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
 
         // Update user points
         const updatedUser = await prisma.user.update({
-            where: { id: req.user.userId },
+            where: { id: req.user!.userId },
             data: { points: { increment: 10 } },
             select: { points: true },
         });
