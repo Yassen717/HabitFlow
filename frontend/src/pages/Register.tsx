@@ -24,7 +24,7 @@ const Register: React.FC = () => {
                 email,
                 password,
             });
-            login(response.data.token, response.data.user);
+            login(response.data.token, response.data.refreshToken, response.data.user);
             toast.success('Account created successfully!', {
                 style: {
                     background: '#1e293b',

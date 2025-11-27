@@ -22,7 +22,7 @@ const Login: React.FC = () => {
                 email,
                 password,
             });
-            login(response.data.token, response.data.user);
+            login(response.data.token, response.data.refreshToken, response.data.user);
             toast.success('Welcome back!', {
                 style: {
                     background: '#1e293b',
