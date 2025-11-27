@@ -39,7 +39,7 @@ model Habit {
 model Log {
   id        String   @id @default(uuid())
   habitId   String
-  habit     Habit    @relation(fields: [habitId], references: [id])
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
   date      DateTime @default(now()) // The date the habit was completed
   completed Boolean  @default(true)
 
