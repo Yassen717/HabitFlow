@@ -19,6 +19,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   habits    Habit[]
+  refreshTokens RefreshToken[]
 }
 
 model Habit {
@@ -44,4 +45,16 @@ model Log {
 
   @@index([habitId])
   @@index([date])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+
+  @@index([userId])
 }
