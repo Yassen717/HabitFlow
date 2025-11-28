@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { authService } from '../services/authService';
 
 interface User {
     id: string;
@@ -19,8 +20,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_BASE_URL = 'http://localhost:3000';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -72,11 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
-                refreshToken: currentRefreshToken,
-            });
-
-            const { token: newToken, refreshToken: newRefreshToken, user: userData } = response.data;
+            const { token: newToken, refreshToken: newRefreshToken, user: userData } =
+                await authService.refreshToken(currentRefreshToken);
 
             setToken(newToken);
             setRefreshToken(newRefreshToken);
@@ -110,9 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Revoke refresh token on server
         if (currentRefreshToken) {
             try {
-                await axios.post(`${API_BASE_URL}/api/auth/logout`, {
-                    refreshToken: currentRefreshToken,
-                });
+                await authService.logout(currentRefreshToken);
             } catch (error) {
                 console.error('Logout error:', error);
             }
