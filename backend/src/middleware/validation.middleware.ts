@@ -62,3 +62,18 @@ export const createHabitValidation = [
         .withMessage('Frequency must be either "daily" or "weekly"'),
     handleValidationErrors
 ];
+
+// User profile validation rules
+export const updateProfileValidation = [
+    body('name')
+        .optional()
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Name must be between 1 and 100 characters'),
+    body('email')
+        .optional()
+        .isEmail()
+        .withMessage('Please provide a valid email address')
+        .normalizeEmail(),
+    handleValidationErrors
+];
