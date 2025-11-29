@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { updateProfile } from '../controllers/user.controller';
+import { updateProfile, changePassword } from '../controllers/user.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
-import { updateProfileValidation } from '../middleware/validation.middleware';
+import { updateProfileValidation, changePasswordValidation } from '../middleware/validation.middleware';
 
 const router = Router();
 
@@ -9,5 +9,6 @@ const router = Router();
 router.use(authenticateToken);
 
 router.put('/profile', updateProfileValidation, updateProfile);
+router.put('/password', changePasswordValidation, changePassword);
 
 export default router;

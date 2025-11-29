@@ -64,3 +64,49 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Error updating profile' });
     }
 };
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user!.userId;
+
+    try {
+        // Get user with password
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Verify current password
+        const bcrypt = require('bcryptjs');
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+
+        // Check if new password is different from current
+        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({ message: 'New password must be different from current password' });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password
+        await prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword },
+        });
+
+        logger.info(`Password changed for user: ${userId}`);
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        logger.error('Error changing password:', error);
+        res.status(500).json({ message: 'Error changing password' });
+    }
+};

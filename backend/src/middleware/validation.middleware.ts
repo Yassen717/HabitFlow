@@ -77,3 +77,16 @@ export const updateProfileValidation = [
         .normalizeEmail(),
     handleValidationErrors
 ];
+
+// Password change validation rules
+export const changePasswordValidation = [
+    body('currentPassword')
+        .notEmpty()
+        .withMessage('Current password is required'),
+    body('newPassword')
+        .isLength({ min: 6 })
+        .withMessage('New password must be at least 6 characters long')
+        .notEmpty()
+        .withMessage('New password is required'),
+    handleValidationErrors
+];
