@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Plus, LogOut, TrendingUp, Home, User, Info } from 'lucide-react';
+import { Plus, LogOut, TrendingUp, Home, User, Info, Settings } from 'lucide-react';
 
 interface DashboardNavProps {
     onNewHabit: () => void;
@@ -13,6 +13,7 @@ const DashboardNav: React.FC<DashboardNavProps> = ({ onNewHabit, onLogout, curre
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
         { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
+        { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
         { id: 'about', label: 'About', icon: Info, path: '/about' },
     ];
 
@@ -38,8 +39,8 @@ const DashboardNav: React.FC<DashboardNavProps> = ({ onNewHabit, onLogout, curre
                                     key={item.id}
                                     to={item.path}
                                     className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${currentPage === item.id
-                                            ? 'bg-sky-50 text-sky-700'
-                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                        ? 'bg-sky-50 text-sky-700'
+                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                                         }`}
                                 >
                                     <item.icon size={16} />

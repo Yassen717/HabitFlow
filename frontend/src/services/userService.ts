@@ -23,6 +23,13 @@ export const userService = {
         });
         return response.data;
     },
+
+    changePassword: async (token: string, data: { currentPassword: string; newPassword: string }): Promise<{ message: string }> => {
+        const response = await apiClient.put<{ message: string }>('/api/users/password', data, {
+            headers: getAuthHeader(token),
+        });
+        return response.data;
+    },
 };
 
 export default userService;
