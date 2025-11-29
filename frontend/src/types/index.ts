@@ -5,6 +5,12 @@ export interface User {
     email: string;
     name: string | null;
     points: number;
+    createdAt?: string;
+}
+
+export interface UpdateProfileData {
+    name?: string;
+    email?: string;
 }
 
 export interface Habit {

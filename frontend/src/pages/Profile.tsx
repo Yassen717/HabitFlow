@@ -4,19 +4,55 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Award, Calendar, Edit2, Save, X, ArrowLeft } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import { userService } from '../services/userService';
+import type { UpdateProfileData } from '../types';
 
 const Profile: React.FC = () => {
-    const { user } = useAuth();
+    const { user, token, updateUser } = useAuth();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [name, setName] = useState(user?.name || '');
     const [email, setEmail] = useState(user?.email || '');
 
-    const handleSave = () => {
-        toast.success('Profile updated successfully!', {
-            style: { background: '#1e293b', color: '#fff' },
-        });
-        setIsEditing(false);
+    const handleSave = async () => {
+        if (!token) return;
+
+        // Validation
+        if (!name.trim() && !email.trim()) {
+            toast.error('Please fill in at least one field');
+            return;
+        }
+
+        if (name === user?.name && email === user?.email) {
+            toast.error('No changes to save');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const updateData: UpdateProfileData = {};
+            if (name !== user?.name) updateData.name = name;
+            if (email !== user?.email) updateData.email = email;
+
+            const response = await userService.updateProfile(token, updateData);
+
+            // Update the user in AuthContext
+            updateUser(response.user);
+
+            toast.success('Profile updated successfully!', {
+                style: { background: '#1e293b', color: '#fff' },
+            });
+            setIsEditing(false);
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to update profile';
+            toast.error(errorMessage, {
+                style: { background: '#dc2626', color: '#fff' },
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleCancel = () => {
@@ -25,10 +61,15 @@ const Profile: React.FC = () => {
         setIsEditing(false);
     };
 
-    const memberSince = new Date().toLocaleDateString('en-US', {
-        month: 'long',
-        year: 'numeric'
-    });
+    const memberSince = user?.createdAt
+        ? new Date(user.createdAt).toLocaleDateString('en-US', {
+            month: 'long',
+            year: 'numeric'
+        })
+        : new Date().toLocaleDateString('en-US', {
+            month: 'long',
+            year: 'numeric'
+        });
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 p-6">
@@ -93,13 +134,14 @@ const Profile: React.FC = () => {
                                             Cancel
                                         </motion.button>
                                         <motion.button
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
+                                            whileHover={{ scale: isLoading ? 1 : 1.05 }}
+                                            whileTap={{ scale: isLoading ? 1 : 0.95 }}
                                             onClick={handleSave}
-                                            className="btn-primary flex items-center gap-2 rounded-xl px-4 py-2 text-sm"
+                                            disabled={isLoading}
+                                            className="btn-primary flex items-center gap-2 rounded-xl px-4 py-2 text-sm disabled:opacity-60 disabled:cursor-wait"
                                         >
                                             <Save size={16} />
-                                            Save Changes
+                                            {isLoading ? 'Saving...' : 'Save Changes'}
                                         </motion.button>
                                     </div>
                                 )}
