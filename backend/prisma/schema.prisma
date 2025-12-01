@@ -20,6 +20,7 @@ model User {
   updatedAt DateTime @updatedAt
   habits    Habit[]
   refreshTokens RefreshToken[]
+  userAchievements UserAchievement[]
 }
 
 model Habit {
@@ -57,4 +58,32 @@ model RefreshToken {
   revoked   Boolean  @default(false)
 
   @@index([userId])
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "first_habit", "week_warrior"
+  name        String   // Display name
+  description String   // Achievement description
+  category    String   // "streak", "habits", "points", "consistency"
+  tier        String   // "bronze", "silver", "gold", "platinum"
+  pointsReward Int     @default(0) // Bonus points for earning
+  criteria    String   // JSON string with criteria data
+  icon        String   @default("trophy") // Icon identifier
+  createdAt   DateTime @default(now())
+  
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementKey String
+  achievement   Achievement @relation(fields: [achievementKey], references: [key])
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementKey])
+  @@index([userId])
+  @@index([achievementKey])
 }

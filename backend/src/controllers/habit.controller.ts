@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import logger from '../lib/logger';
 import { JwtPayload, Log } from '../types';
+import { checkAchievements } from '../lib/achievement.service';
 
 interface AuthRequest extends Request {
     user?: JwtPayload; // Set by authenticateToken middleware
@@ -104,7 +105,20 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
                 userId: req.user!.userId,
             },
         });
-        res.status(201).json(habit);
+
+        // Check for habit creation achievements
+        const habitCount = await prisma.habit.count({
+            where: { userId: req.user!.userId },
+        });
+
+        const newAchievements = await checkAchievements(req.user!.userId, {
+            totalHabits: habitCount,
+        });
+
+        res.status(201).json({
+            habit,
+            newAchievements,
+        });
     } catch (error) {
         logger.error('Error creating habit:', error);
         res.status(500).json({ message: 'Error creating habit' });
@@ -216,17 +230,41 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
             },
         });
 
-        // Update user points
+        // Update user points for habit completion
         const updatedUser = await prisma.user.update({
             where: { id: req.user!.userId },
             data: { points: { increment: 10 } },
             select: { points: true },
         });
 
+        // Calculate current streak for this habit
+        const updatedHabit = await prisma.habit.findUnique({
+            where: { id },
+            include: { logs: true },
+        });
+        const currentStreak = updatedHabit ? calculateStreak(updatedHabit.logs) : 0;
+
+        // Get total completions
+        const totalCompletions = await prisma.log.count({
+            where: { habit: { userId: req.user!.userId } },
+        });
+
+        // Check for achievements
+        const newAchievements = await checkAchievements(req.user!.userId, {
+            currentStreak,
+            totalPoints: updatedUser.points,
+            totalCompletions,
+        });
+
+        // Calculate final points including achievement bonuses
+        const achievementPoints = newAchievements.reduce((sum, a) => sum + a.pointsAwarded, 0);
+        const finalPoints = updatedUser.points + achievementPoints;
+
         res.json({
             log,
-            userPoints: updatedUser.points,
-            message: 'Habit logged successfully! +10 points'
+            userPoints: finalPoints,
+            message: 'Habit logged successfully! +10 points',
+            newAchievements,
         });
     } catch (error) {
         logger.error('Error logging habit:', error);

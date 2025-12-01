@@ -24,6 +24,7 @@ const requestTimeout = (req: express.Request, res: express.Response, next: expre
 import authRoutes from './routes/auth.routes';
 import habitRoutes from './routes/habit.routes';
 import userRoutes from './routes/user.routes';
+import achievementRoutes from './routes/achievement.routes';
 
 app.use(cors());
 app.use(express.json());
@@ -32,6 +33,7 @@ app.use(requestTimeout);
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/achievements', achievementRoutes);
 
 app.get('/', (req, res) => {
   res.send('Smart Habit Tracker API is running!');
