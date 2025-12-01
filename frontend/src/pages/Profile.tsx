@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Award, Calendar, Edit2, Save, X, ArrowLeft } from 'lucide-react';
+import { User, Mail, Award, Calendar, Edit2, Save, X, ArrowLeft, Trophy } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { userService } from '../services/userService';
-import type { UpdateProfileData } from '../types';
+import { achievementService } from '../services/achievementService';
+import AchievementBadge from '../components/AchievementBadge';
+import type { UpdateProfileData, Achievement, UserAchievement } from '../types';
 
 const Profile: React.FC = () => {
     const { user, token, updateUser } = useAuth();
@@ -14,6 +16,9 @@ const Profile: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [name, setName] = useState(user?.name || '');
     const [email, setEmail] = useState(user?.email || '');
+    const [achievements, setAchievements] = useState<Achievement[]>([]);
+    const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
+    const [achievementsLoading, setAchievementsLoading] = useState(true);
 
     const handleSave = async () => {
         if (!token) return;
@@ -70,6 +75,29 @@ const Profile: React.FC = () => {
             month: 'long',
             year: 'numeric'
         });
+
+    // Fetch achievements on mount
+    useEffect(() => {
+        const fetchAchievements = async () => {
+            if (!token) return;
+            try {
+                const [allAchievements, userAchs] = await Promise.all([
+                    achievementService.getAchievements(),
+                    achievementService.getUserAchievements(token),
+                ]);
+                setAchievements(allAchievements);
+                setUserAchievements(userAchs);
+            } catch (error) {
+                console.error('Error fetching achievements:', error);
+            } finally {
+                setAchievementsLoading(false);
+            }
+        };
+        fetchAchievements();
+    }, [token]);
+
+    const unlockedKeys = new Set(userAchievements.map(ua => ua.achievementKey));
+    const unlockedCount = userAchievements.length;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 p-6">
@@ -234,27 +262,45 @@ const Profile: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Achievement Preview */}
+                        {/* Achievements Card */}
                         <div className="glass-card rounded-2xl p-6 shadow-premium">
-                            <h3 className="mb-4 font-['Space_Grotesk'] text-lg font-bold text-slate-900">
-                                Recent Achievements
-                            </h3>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="text-2xl">🏆</div>
-                                    <div>
-                                        <div className="text-sm font-semibold text-slate-900">First Habit</div>
-                                        <div className="text-xs text-slate-500">Created your first habit</div>
-                                    </div>
+                            <div className="mb-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Trophy className="h-5 w-5 text-amber-500" />
+                                    <h3 className="font-['Space_Grotesk'] text-lg font-bold text-slate-900">
+                                        Achievements
+                                    </h3>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="text-2xl">🔥</div>
-                                    <div>
-                                        <div className="text-sm font-semibold text-slate-900">Consistency</div>
-                                        <div className="text-xs text-slate-500">3 day streak</div>
-                                    </div>
-                                </div>
+                                <span className="text-sm font-semibold text-sky-600">
+                                    {unlockedCount}/{achievements.length}
+                                </span>
                             </div>
+
+                            {achievementsLoading ? (
+                                <div className="py-8 text-center text-sm text-slate-500">
+                                    Loading achievements...
+                                </div>
+                            ) : achievements.length > 0 ? (
+                                <div className="grid grid-cols-4 gap-3">
+                                    {achievements.slice(0, 8).map((achievement) => {
+                                        const userAch = userAchievements.find(
+                                            (ua) => ua.achievementKey === achievement.key
+                                        );
+                                        return (
+                                            <AchievementBadge
+                                                key={achievement.id}
+                                                achievement={achievement}
+                                                isUnlocked={unlockedKeys.has(achievement.key)}
+                                                size="md"
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="py-8 text-center text-sm text-slate-500">
+                                    No achievements yet. Start completing habits!
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 </div>

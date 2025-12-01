@@ -59,6 +59,7 @@ export interface LogHabitResponse {
     log: Log;
     userPoints: number;
     message: string;
+    newAchievements?: UnlockedAchievement[];
 }
 
 export interface AuthResponse {
@@ -66,3 +67,39 @@ export interface AuthResponse {
     user: User;
     message: string;
 }
+
+// Achievement types
+export type AchievementCategory = 'streak' | 'habits' | 'points' | 'consistency';
+export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum';
+
+export interface Achievement {
+    id: string;
+    key: string;
+    name: string;
+    description: string;
+    category: AchievementCategory;
+    tier: AchievementTier;
+    pointsReward: number;
+    criteria: string;
+    icon: string;
+    createdAt: string;
+}
+
+export interface UserAchievement {
+    id: string;
+    userId: string;
+    achievementKey: string;
+    achievement: Achievement;
+    unlockedAt: string;
+}
+
+export interface UnlockedAchievement {
+    achievement: Achievement;
+    pointsAwarded: number;
+}
+
+export interface CreateHabitResponse {
+    habit: Habit;
+    newAchievements?: UnlockedAchievement[];
+}
+

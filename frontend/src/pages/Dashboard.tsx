@@ -9,9 +9,10 @@ import CreateHabitModal from '../components/CreateHabitModal';
 import EditHabitModal from '../components/EditHabitModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressChart from '../components/ProgressChart';
+import AchievementUnlocked from '../components/AchievementUnlocked';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
-import type { Habit, CreateHabitData, UpdateHabitData } from '../types';
+import type { Habit, CreateHabitData, UpdateHabitData, UnlockedAchievement } from '../types';
 
 const Dashboard: React.FC = () => {
     const { user, logout, token, updateUser } = useAuth();
@@ -27,6 +28,7 @@ const Dashboard: React.FC = () => {
     const [isUpdating, setIsUpdating] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [processingHabitId, setProcessingHabitId] = useState<string | null>(null);
+    const [unlockedAchievement, setUnlockedAchievement] = useState<UnlockedAchievement | null>(null);
 
     useEffect(() => {
         fetchHabits();
@@ -55,12 +57,21 @@ const Dashboard: React.FC = () => {
 
         setIsCreating(true);
         try {
-            await habitService.createHabit(token, habitData);
+            const response = await habitService.createHabit(token, habitData);
             toast.success('Habit created successfully', {
                 style: { background: '#1e293b', color: '#fff' },
             });
             setIsModalOpen(false);
             fetchHabits();
+
+            // Show achievement unlock if any
+            if (response.newAchievements && response.newAchievements.length > 0) {
+                // Show first achievement (can be enhanced to queue multiple)
+                setUnlockedAchievement(response.newAchievements[0]);
+                // Update points
+                const bonusPoints = response.newAchievements.reduce((sum, a) => sum + a.pointsAwarded, 0);
+                updateUser({ points: (user?.points || 0) + bonusPoints });
+            }
         } catch (error) {
             console.error('Error creating habit:', error);
             toast.error('Failed to create habit');
@@ -109,6 +120,14 @@ const Dashboard: React.FC = () => {
                 style: { background: '#1e293b', color: '#fff' },
             });
             fetchHabits();
+
+            // Show achievement unlock if any
+            if (response.newAchievements && response.newAchievements.length > 0) {
+                // Show first achievement with a small delay to let check-in complete
+                setTimeout(() => {
+                    setUnlockedAchievement(response.newAchievements![0]);
+                }, 500);
+            }
         } catch (error) {
             console.error('Error checking in:', error);
             toast.error('Failed to check in');
@@ -248,6 +267,12 @@ const Dashboard: React.FC = () => {
                 cancelText="Cancel"
                 isLoading={isDeleting}
                 type="danger"
+            />
+
+            {/* Achievement Unlock Modal */}
+            <AchievementUnlocked
+                achievement={unlockedAchievement}
+                onClose={() => setUnlockedAchievement(null)}
             />
         </div>
     );

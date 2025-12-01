@@ -1,5 +1,5 @@
 import { apiClient, getAuthHeader } from './api';
-import type { Habit, CreateHabitData, UpdateHabitData, GetHabitsResponse, LogHabitResponse } from '../types';
+import type { Habit, CreateHabitData, UpdateHabitData, GetHabitsResponse, LogHabitResponse, CreateHabitResponse } from '../types';
 
 export const habitService = {
     getHabits: async (token: string, page: number = 1, limit: number = 10): Promise<GetHabitsResponse> => {
@@ -10,8 +10,8 @@ export const habitService = {
         return response.data;
     },
 
-    createHabit: async (token: string, data: CreateHabitData): Promise<Habit> => {
-        const response = await apiClient.post<Habit>('/api/habits', data, {
+    createHabit: async (token: string, data: CreateHabitData): Promise<CreateHabitResponse> => {
+        const response = await apiClient.post<CreateHabitResponse>('/api/habits', data, {
             headers: getAuthHeader(token),
         });
         return response.data;
