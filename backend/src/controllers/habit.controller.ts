@@ -195,6 +195,7 @@ export const deleteHabit = async (req: AuthRequest, res: Response) => {
 
 export const logHabit = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+    const { note } = req.body; // Extract optional note
     try {
         // Check if habit exists and belongs to user
         const habit = await prisma.habit.findUnique({
@@ -227,6 +228,7 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
             data: {
                 habitId: id,
                 completed: true,
+                note: note || null, // Store the optional note
             },
         });
 

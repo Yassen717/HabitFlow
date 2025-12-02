@@ -43,6 +43,7 @@ model Log {
   habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
   date      DateTime @default(now()) // The date the habit was completed
   completed Boolean  @default(true)
+  note      String?  // Optional note for this check-in
 
   @@index([habitId])
   @@index([date])
