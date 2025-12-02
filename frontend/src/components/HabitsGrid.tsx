@@ -8,7 +8,7 @@ import type { Habit } from '../types';
 interface HabitsGridProps {
     habits: Habit[];
     isLoading: boolean;
-    onCheckIn: (id: string) => void;
+    onCheckIn: (id: string, note?: string) => void;
     onEdit: (habit: Habit) => void;
     onDelete: (id: string) => void;
     processingHabitId: string | null;

@@ -1,17 +1,21 @@
-import React from 'react';
-import { Check, Trash2, Calendar, TrendingUp, Pencil } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Check, Trash2, Calendar, TrendingUp, Pencil, StickyNote, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Habit } from '../types';
 
 interface HabitCardProps {
     habit: Habit;
-    onCheckIn: (id: string) => void;
+    onCheckIn: (id: string, note?: string) => void;
     onEdit: (habit: Habit) => void;
     onDelete: (id: string) => void;
     isProcessing?: boolean;
 }
 
 const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onEdit, onDelete, isProcessing = false }) => {
+    const [showNoteInput, setShowNoteInput] = useState(false);
+    const [note, setNote] = useState('');
+    const [showNotesHistory, setShowNotesHistory] = useState(false);
+
     const isCompletedToday = habit.logs.some((log) => {
         const logDate = new Date(log.date).toDateString();
         const today = new Date().toDateString();
@@ -43,6 +47,18 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onEdit, onDelet
     };
 
     const completionRate = calculateCompletionRate();
+
+    // Get notes with content (most recent first)
+    const notesWithContent = habit.logs
+        .filter(log => log.note && log.note.trim())
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+
+    const handleSubmitCheckIn = () => {
+        onCheckIn(habit.id, note.trim() || undefined);
+        setNote('');
+        setShowNoteInput(false);
+    };
 
     return (
         <motion.div
@@ -94,6 +110,13 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onEdit, onDelet
                     <TrendingUp size={14} className="text-indigo-600" />
                     <span className="text-xs font-semibold text-indigo-700">{streak} days</span>
                 </div>
+
+                {notesWithContent.length > 0 && (
+                    <div className="flex items-center gap-1.5 rounded-lg bg-purple-50 px-3 py-1.5">
+                        <StickyNote size={14} className="text-purple-600" />
+                        <span className="text-xs font-semibold text-purple-700">{notesWithContent.length} notes</span>
+                    </div>
+                )}
             </div>
 
             {/* Progress Bar */}
@@ -112,11 +135,55 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onEdit, onDelet
                 </div>
             </div>
 
+            {/* Check-in Section */}
+            {!isCompletedToday && !isProcessing && (
+                <AnimatePresence>
+                    {showNoteInput ? (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mb-3 overflow-hidden"
+                        >
+                            <textarea
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                placeholder="Add a note about today's completion... (optional)"
+                                maxLength={500}
+                                rows={3}
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                            />
+                            <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                                <span>{note.length}/500 characters</span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setShowNoteInput(false);
+                                            setNote('');
+                                        }}
+                                        className="px-3 py-1 text-slate-600 hover:text-slate-900"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ) : null}
+                </AnimatePresence>
+            )}
+
             {/* Action Button */}
             <motion.button
                 whileHover={{ scale: isCompletedToday || isProcessing ? 1 : 1.02 }}
                 whileTap={{ scale: isCompletedToday || isProcessing ? 1 : 0.98 }}
-                onClick={() => !isCompletedToday && !isProcessing && onCheckIn(habit.id)}
+                onClick={() => {
+                    if (isCompletedToday || isProcessing) return;
+                    if (showNoteInput) {
+                        handleSubmitCheckIn();
+                    } else {
+                        setShowNoteInput(true);
+                    }
+                }}
                 disabled={isCompletedToday || isProcessing}
                 className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition-all ${isCompletedToday
                     ? 'cursor-not-allowed bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30'
@@ -126,8 +193,47 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onCheckIn, onEdit, onDelet
                     }`}
             >
                 <Check size={18} />
-                {isCompletedToday ? 'Completed Today' : isProcessing ? 'Processing...' : 'Mark Complete'}
+                {isCompletedToday ? 'Completed Today' : isProcessing ? 'Processing...' : showNoteInput ? 'Submit' : 'Mark Complete'}
             </motion.button>
+
+            {/* Notes History */}
+            {notesWithContent.length > 0 && (
+                <div className="mt-4 border-t border-slate-200 pt-4">
+                    <button
+                        onClick={() => setShowNotesHistory(!showNotesHistory)}
+                        className="mb-2 flex w-full items-center justify-between text-sm font-semibold text-slate-700 hover:text-slate-900"
+                    >
+                        <span>Recent Notes ({notesWithContent.length})</span>
+                        {showNotesHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+
+                    <AnimatePresence>
+                        {showNotesHistory && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="space-y-2 overflow-hidden"
+                            >
+                                {notesWithContent.map((log, index) => (
+                                    <div key={log.id || index} className="rounded-lg bg-slate-50 p-3">
+                                        <div className="mb-1 flex items-center justify-between">
+                                            <span className="text-xs font-medium text-slate-500">
+                                                {new Date(log.date).toLocaleDateString('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric',
+                                                })}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-slate-700">{log.note}</p>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            )}
         </motion.div>
     );
 };

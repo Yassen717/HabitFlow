@@ -105,12 +105,12 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const handleCheckIn = async (id: string) => {
+    const handleCheckIn = async (id: string, note?: string) => {
         if (!token) return;
 
         setProcessingHabitId(id);
         try {
-            const response = await habitService.logHabit(token, id);
+            const response = await habitService.logHabit(token, id, note);
             // Update user points if available in response
             if (response.userPoints !== undefined) {
                 updateUser({ points: response.userPoints });

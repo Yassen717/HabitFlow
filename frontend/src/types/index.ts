@@ -28,6 +28,7 @@ export interface Log {
     habitId: string;
     date: string;
     completed: boolean;
+    note?: string; // Optional note for this check-in
 }
 
 export interface PaginationMeta {

@@ -30,8 +30,8 @@ export const habitService = {
         });
     },
 
-    logHabit: async (token: string, id: string): Promise<LogHabitResponse> => {
-        const response = await apiClient.post<LogHabitResponse>(`/api/habits/${id}/log`, {}, {
+    logHabit: async (token: string, id: string, note?: string): Promise<LogHabitResponse> => {
+        const response = await apiClient.post<LogHabitResponse>(`/api/habits/${id}/log`, { note }, {
             headers: getAuthHeader(token),
         });
         return response.data;
