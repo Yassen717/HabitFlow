@@ -27,6 +27,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [refreshToken, setRefreshToken] = useState<string | null>(localStorage.getItem('refreshToken'));
 
+    // Prevent race condition for concurrent refresh requests
+    const refreshInProgress = React.useRef(false);
+    const refreshPromise = React.useRef<Promise<boolean> | null>(null);
+
     useEffect(() => {
         if (token) {
             const storedUser = localStorage.getItem('user');
@@ -47,11 +51,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (error.response?.status === 401 && !originalRequest._retry && refreshToken) {
                     originalRequest._retry = true;
 
-                    const success = await refreshAccessToken();
-                    if (success) {
-                        // Retry the original request with new token
-                        originalRequest.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
-                        return axios(originalRequest);
+                    // If refresh is already in progress, wait for it
+                    if (refreshInProgress.current && refreshPromise.current) {
+                        const success = await refreshPromise.current;
+                        if (success) {
+                            // Retry the original request with new token
+                            originalRequest.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
+                            return axios(originalRequest);
+                        }
+                    } else {
+                        // Start a new refresh
+                        const success = await refreshAccessToken();
+                        if (success) {
+                            // Retry the original request with new token
+                            originalRequest.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
+                            return axios(originalRequest);
+                        }
                     }
                 }
 
@@ -66,30 +81,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [refreshToken]);
 
     const refreshAccessToken = async (): Promise<boolean> => {
+        // If refresh is already in progress, return the existing promise
+        if (refreshInProgress.current && refreshPromise.current) {
+            return refreshPromise.current;
+        }
+
         const currentRefreshToken = localStorage.getItem('refreshToken');
         if (!currentRefreshToken) {
             return false;
         }
 
-        try {
-            const { token: newToken, refreshToken: newRefreshToken, user: userData } =
-                await authService.refreshToken(currentRefreshToken);
+        // Set flag and create promise
+        refreshInProgress.current = true;
+        refreshPromise.current = (async () => {
+            try {
+                const { token: newToken, refreshToken: newRefreshToken, user: userData } =
+                    await authService.refreshToken(currentRefreshToken);
 
-            setToken(newToken);
-            setRefreshToken(newRefreshToken);
-            setUser(userData);
+                setToken(newToken);
+                setRefreshToken(newRefreshToken);
+                setUser(userData);
 
-            localStorage.setItem('token', newToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
-            localStorage.setItem('user', JSON.stringify(userData));
+                localStorage.setItem('token', newToken);
+                localStorage.setItem('refreshToken', newRefreshToken);
+                localStorage.setItem('user', JSON.stringify(userData));
 
-            return true;
-        } catch (error) {
-            console.error('Token refresh failed:', error);
-            // If refresh fails, log out the user
-            await logout();
-            return false;
-        }
+                return true;
+            } catch (error) {
+                console.error('Token refresh failed:', error);
+                // If refresh fails, log out the user
+                await logout();
+                return false;
+            } finally {
+                // Reset flag and promise
+                refreshInProgress.current = false;
+                refreshPromise.current = null;
+            }
+        })();
+
+        return refreshPromise.current;
     };
 
     const login = (newToken: string, newRefreshToken: string, newUser: User) => {
