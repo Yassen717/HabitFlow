@@ -96,6 +96,48 @@ app.get('/', (req, res) => {
   res.send('Smart Habit Tracker API is running!');
 });
 
+// 404 handler - must be after all routes
+app.use((req, res) => {
+  logger.warn(`404 - Route not found: ${req.method} ${req.url}`);
+  res.status(404).json({
+    message: 'Route not found',
+    path: req.url,
+  });
+});
+
+// Global error handler - must be last middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Log the full error details
+  logger.error('Unhandled error:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    ip: req.ip,
+  });
+
+  // Don't expose internal error details in production
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+
+  // Determine status code
+  const statusCode = err.statusCode || err.status || 500;
+
+  // Build error response
+  const errorResponse: any = {
+    message: statusCode === 500
+      ? 'An unexpected error occurred. Please try again later.'
+      : err.message || 'An error occurred',
+  };
+
+  // Add stack trace in development
+  if (isDevelopment && err.stack) {
+    errorResponse.stack = err.stack;
+    errorResponse.details = err;
+  }
+
+  res.status(statusCode).json(errorResponse);
+});
+
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
 });
