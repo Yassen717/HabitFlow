@@ -90,3 +90,14 @@ export const changePasswordValidation = [
         .withMessage('New password is required'),
     handleValidationErrors
 ];
+
+// Habit log validation rules
+export const logHabitValidation = [
+    body('note')
+        .optional()
+        .trim()
+        .isLength({ max: 500 })
+        .withMessage('Note cannot exceed 500 characters')
+        .escape(), // Sanitize to prevent XSS
+    handleValidationErrors
+];
