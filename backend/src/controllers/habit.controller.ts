@@ -50,9 +50,16 @@ const calculateStreak = (logs: Log[]): number => {
 
 export const getHabits = async (req: AuthRequest, res: Response) => {
     try {
-        // Parse pagination parameters with defaults
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
+        // Pagination constants
+        const MAX_LIMIT = 50; // Maximum items per page
+        const DEFAULT_LIMIT = 10;
+        const MIN_PAGE = 1;
+
+        // Parse pagination parameters with validation
+        const requestedLimit = parseInt(req.query.limit as string) || DEFAULT_LIMIT;
+        const limit = Math.min(Math.max(requestedLimit, 1), MAX_LIMIT); // Cap at MAX_LIMIT
+        const requestedPage = parseInt(req.query.page as string) || MIN_PAGE;
+        const page = Math.max(requestedPage, MIN_PAGE); // Ensure page is at least 1
         const skip = (page - 1) * limit;
 
         const [habits, totalCount, user] = await Promise.all([
