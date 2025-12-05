@@ -282,19 +282,14 @@ const Profile: React.FC = () => {
                                 </div>
                             ) : achievements.length > 0 ? (
                                 <div className="grid grid-cols-4 gap-3">
-                                    {achievements.slice(0, 8).map((achievement) => {
-                                        const userAch = userAchievements.find(
-                                            (ua) => ua.achievementKey === achievement.key
-                                        );
-                                        return (
-                                            <AchievementBadge
-                                                key={achievement.id}
-                                                achievement={achievement}
-                                                isUnlocked={unlockedKeys.has(achievement.key)}
-                                                size="md"
-                                            />
-                                        );
-                                    })}
+                                    {achievements.slice(0, 8).map((achievement) => (
+                                        <AchievementBadge
+                                            key={achievement.id}
+                                            achievement={achievement}
+                                            isUnlocked={unlockedKeys.has(achievement.key)}
+                                            size="md"
+                                        />
+                                    ))}
                                 </div>
                             ) : (
                                 <div className="py-8 text-center text-sm text-slate-500">

@@ -71,7 +71,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ habits }) => {
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }} />
                             <Bar dataKey="completions" radius={[8, 8, 0, 0]} maxBarSize={60}>
-                                {data.map((entry, index) => (
+                                {data.map((_entry, index) => (
                                     <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                                 ))}
                             </Bar>
