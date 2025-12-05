@@ -7,3 +7,11 @@ node_modules
 # Logs
 logs/
 *.log
+
+# Database files (SQLite - deprecated, PostgreSQL dumps)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sql
+*.dump

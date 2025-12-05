@@ -24,7 +24,7 @@ A professional, full-stack habit tracking application with gamification features
 - Node.js + Express
 - TypeScript
 - Prisma ORM
-- SQLite database
+- PostgreSQL database
 - JWT authentication
 - bcryptjs (password hashing)
 
@@ -61,16 +61,35 @@ npm install
 Create `.env` in the backend folder:
 ```env
 PORT=3000
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/habitflow_dev"
 JWT_SECRET="your-secret-key-here"
+CORS_ORIGIN="http://localhost:5173,http://localhost:5174"
 ```
 
-4. **Initialize the database**
+4. **Set up PostgreSQL database**
+
+**Option A: Using Docker (Recommended)**
+```bash
+docker run --name habitflow-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=habitflow_dev \
+  -p 5432:5432 \
+  -d postgres:16-alpine
+```
+
+**Option B: Local PostgreSQL**
+- Install PostgreSQL from https://www.postgresql.org/
+- Create database: `createdb habitflow_dev`
+
+5. **Initialize the database**
 ```bash
 cd backend
 npx prisma generate
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 ```
+
+> **Note:** For detailed PostgreSQL setup instructions, see [POSTGRESQL_MIGRATION.md](backend/POSTGRESQL_MIGRATION.md)
 
 ## 🚀 Running the Application
 

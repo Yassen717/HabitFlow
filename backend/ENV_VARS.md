@@ -5,7 +5,7 @@
 ### Required Variables
 
 - `PORT` - Server port (default: 3000)
-- `DATABASE_URL` - Database connection string
+- `DATABASE_URL` - PostgreSQL database connection string
 - `JWT_SECRET` - Secret key for JWT token generation (minimum 32 characters recommended)
 
 ### Optional Variables
@@ -15,11 +15,21 @@
   
 ### Example .env file
 
+**Development (Local PostgreSQL):**
 ```env
 PORT=3000
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://username:password@localhost:5432/habitflow_dev"
 JWT_SECRET="your-super-secret-key-at-least-32-characters-long"
 CORS_ORIGIN="http://localhost:5173,http://localhost:5174"
+```
+
+**Production (e.g., Railway, Render):**
+```env
+PORT=3000
+DATABASE_URL="postgresql://user:pass@host:5432/dbname?schema=public"
+JWT_SECRET="your-super-secret-key-at-least-32-characters-long"
+CORS_ORIGIN="https://yourdomain.com,https://www.yourdomain.com"
+NODE_ENV="production"
 ```
 
 ### Production Configuration
