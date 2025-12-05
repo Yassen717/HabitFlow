@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/authService';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, TrendingUp } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -19,12 +19,8 @@ const Register: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:3000/api/auth/register', {
-                name,
-                email,
-                password,
-            });
-            login(response.data.token, response.data.refreshToken, response.data.user);
+            const response = await authService.register(name, email, password);
+            login(response.token, response.refreshToken, response.user);
             toast.success('Account created successfully!', {
                 style: {
                     background: '#1e293b',

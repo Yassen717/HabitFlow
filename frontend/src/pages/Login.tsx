@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/authService';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, TrendingUp } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -18,11 +18,8 @@ const Login: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:3000/api/auth/login', {
-                email,
-                password,
-            });
-            login(response.data.token, response.data.refreshToken, response.data.user);
+            const response = await authService.login(email, password);
+            login(response.token, response.refreshToken, response.user);
             toast.success('Welcome back!', {
                 style: {
                     background: '#1e293b',
