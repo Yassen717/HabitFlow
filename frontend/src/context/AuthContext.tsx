@@ -3,6 +3,8 @@ import axios from 'axios';
 import { authService } from '../services/authService';
 
 interface User {
+
+
     id: string;
     email: string;
     name: string | null;
