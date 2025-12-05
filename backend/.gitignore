@@ -13,5 +13,5 @@ logs/
 *.db-journal
 *.db-shm
 *.db-wal
-*.sql
+# *.sql - Commented out to allow Prisma migrations
 *.dump

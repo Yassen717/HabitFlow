@@ -94,7 +94,7 @@ Scroll down to "Environment Variables" and add:
 | Key | Value |
 |-----|-------|
 | `DATABASE_URL` | `<paste-your-neon-connection-string>` |
-| `JWT_SECRET` | `your-super-secret-key-min-32-chars-random-string-here` |
+| `JWT_SECRET` | `` |
 | `CORS_ORIGIN` | `https://your-app.vercel.app` (update after Vercel deployment) |
 | `NODE_ENV` | `production` |
 | `PORT` | `3000` |
