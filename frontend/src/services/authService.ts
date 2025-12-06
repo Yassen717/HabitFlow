@@ -44,11 +44,11 @@ export const authService = {
         return response.data;
     },
 
-    register: async (email: string, password: string, name?: string): Promise<RegisterResponse> => {
+    register: async (name: string, email: string, password: string): Promise<RegisterResponse> => {
         const response = await apiClient.post<RegisterResponse>('/api/auth/register', {
+            name,
             email,
             password,
-            name,
         });
         return response.data;
     },
