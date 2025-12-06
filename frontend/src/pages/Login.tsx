@@ -66,26 +66,6 @@ const Login: React.FC = () => {
                         </p>
                     </div>
                 </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                    className="grid grid-cols-3 gap-6"
-                >
-                    <div>
-                        <div className="mb-2 text-3xl font-bold text-white">10K+</div>
-                        <div className="text-sm text-slate-400">Active Users</div>
-                    </div>
-                    <div>
-                        <div className="mb-2 text-3xl font-bold text-white">50K+</div>
-                        <div className="text-sm text-slate-400">Habits Tracked</div>
-                    </div>
-                    <div>
-                        <div className="mb-2 text-3xl font-bold text-white">95%</div>
-                        <div className="text-sm text-slate-400">Success Rate</div>
-                    </div>
-                </motion.div>
             </div>
 
             {/* Right side - Login Form */}
