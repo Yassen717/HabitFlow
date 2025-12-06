@@ -20,8 +20,7 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 export const registerValidation = [
     body('email')
         .isEmail()
-        .withMessage('Please provide a valid email address')
-        .normalizeEmail(),
+        .withMessage('Please provide a valid email address'),
     body('password')
         .isLength({ min: 6 })
         .withMessage('Password must be at least 6 characters long'),
@@ -36,8 +35,7 @@ export const registerValidation = [
 export const loginValidation = [
     body('email')
         .isEmail()
-        .withMessage('Please provide a valid email address')
-        .normalizeEmail(),
+        .withMessage('Please provide a valid email address'),
     body('password')
         .notEmpty()
         .withMessage('Password is required'),
