@@ -133,7 +133,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
 };
 
 export const updateHabit = async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { title, description, frequency } = req.body;
     try {
         // Check if habit exists and belongs to user
@@ -174,7 +174,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
 };
 
 export const deleteHabit = async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     try {
         // Check if habit exists and belongs to user
         const habit = await prisma.habit.findUnique({
@@ -201,7 +201,7 @@ export const deleteHabit = async (req: AuthRequest, res: Response) => {
 };
 
 export const logHabit = async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { note } = req.body; // Extract optional note
     try {
         // Check if habit exists and belongs to user
@@ -221,7 +221,7 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
         // Check if habit was already logged today
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const alreadyLoggedToday = habit.logs.some(log => {
+        const alreadyLoggedToday = habit.logs.some((log: Log) => {
             const logDate = new Date(log.date);
             logDate.setHours(0, 0, 0, 0);
             return logDate.getTime() === today.getTime();
