@@ -6,6 +6,17 @@ import logger from './lib/logger';
 
 dotenv.config();
 
+// Validate required environment variables
+if (!process.env.JWT_SECRET) {
+  logger.error('FATAL: JWT_SECRET environment variable is not set');
+  throw new Error('JWT_SECRET must be defined in environment variables');
+}
+
+if (!process.env.DATABASE_URL) {
+  logger.error('FATAL: DATABASE_URL environment variable is not set');
+  throw new Error('DATABASE_URL must be defined in environment variables');
+}
+
 const app = express();
 const port = process.env.PORT || 3000;
 

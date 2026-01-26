@@ -265,13 +265,19 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
             totalCompletions,
         });
 
-        // Calculate final points including achievement bonuses
+        // Persist achievement points to database
         const achievementPoints = newAchievements.reduce((sum, a) => sum + a.pointsAwarded, 0);
-        const finalPoints = updatedUser.points + achievementPoints;
+        const finalUser = achievementPoints > 0
+            ? await prisma.user.update({
+                where: { id: req.user!.userId },
+                data: { points: { increment: achievementPoints } },
+                select: { points: true },
+            })
+            : updatedUser;
 
         res.json({
             log,
-            userPoints: finalPoints,
+            userPoints: finalUser.points,
             message: 'Habit logged successfully! +10 points',
             newAchievements,
         });

@@ -28,7 +28,7 @@ export const register = async (req: Request, res: Response) => {
             },
         });
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, {
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
             expiresIn: '15m', // Short-lived access token
         });
 
@@ -67,7 +67,7 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, {
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
             expiresIn: '15m', // Short-lived access token
         });
 
@@ -114,7 +114,7 @@ export const refreshToken = async (req: Request, res: Response) => {
         }
 
         // Generate new access token
-        const newToken = jwt.sign({ userId: storedToken.userId }, process.env.JWT_SECRET as string, {
+        const newToken = jwt.sign({ userId: storedToken.userId }, process.env.JWT_SECRET!, {
             expiresIn: '15m',
         });
 
