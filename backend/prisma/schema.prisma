@@ -16,6 +16,8 @@ model User {
   password  String
   name      String?
   points    Int      @default(0)
+  defaultFrequency String @default("daily")
+  notificationsEnabled Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   habits    Habit[]

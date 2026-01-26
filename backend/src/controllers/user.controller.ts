@@ -110,3 +110,47 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Error changing password' });
     }
 };
+
+export const updatePreferences = async (req: AuthRequest, res: Response) => {
+    const { defaultFrequency, notificationsEnabled } = req.body;
+    const userId = req.user!.userId;
+
+    try {
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                defaultFrequency,
+                notificationsEnabled,
+            },
+        });
+
+        logger.info(`Preferences updated for user: ${userId}`);
+        res.json({ message: 'Preferences updated successfully' });
+    } catch (error) {
+        logger.error('Error updating preferences:', error);
+        res.status(500).json({ message: 'Error updating preferences' });
+    }
+};
+
+export const getPreferences = async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                defaultFrequency: true,
+                notificationsEnabled: true,
+            },
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (error) {
+        logger.error('Error fetching preferences:', error);
+        res.status(500).json({ message: 'Error fetching preferences' });
+    }
+};

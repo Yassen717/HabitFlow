@@ -31,11 +31,16 @@ const Dashboard: React.FC = () => {
     const [unlockedAchievement, setUnlockedAchievement] = useState<UnlockedAchievement | null>(null);
 
     useEffect(() => {
-        fetchHabits();
-    }, []);
+        if (token) {
+            fetchHabits();
+        }
+    }, [token]);
 
     const fetchHabits = async () => {
-        if (!token) return;
+        if (!token) {
+            setIsLoading(false);
+            return;
+        }
 
         try {
             const response = await habitService.getHabits(token);

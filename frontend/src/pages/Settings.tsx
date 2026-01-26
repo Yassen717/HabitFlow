@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -19,6 +19,24 @@ const Settings: React.FC = () => {
     // Preferences state
     const [defaultFrequency, setDefaultFrequency] = useState<'daily' | 'weekly'>('daily');
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
+    const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+
+    useEffect(() => {
+        const loadPreferences = async () => {
+            if (!token) return;
+            try {
+                const prefs = await userService.getPreferences(token);
+                setDefaultFrequency(prefs.defaultFrequency);
+                setNotificationsEnabled(prefs.notificationsEnabled);
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+            } finally {
+                setIsLoadingPreferences(false);
+            }
+        };
+        loadPreferences();
+    }, [token]);
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,10 +87,24 @@ const Settings: React.FC = () => {
         navigate('/login');
     };
 
-    const handleSavePreferences = () => {
-        toast.success('Preferences saved!', {
-            style: { background: '#1e293b', color: '#fff' },
-        });
+    const handleSavePreferences = async () => {
+        if (!token) return;
+
+        setIsSavingPreferences(true);
+        try {
+            await userService.updatePreferences(token, {
+                defaultFrequency,
+                notificationsEnabled,
+            });
+            toast.success('Preferences saved!', {
+                style: { background: '#1e293b', color: '#fff' },
+            });
+        } catch (error) {
+            console.error('Error saving preferences:', error);
+            toast.error('Failed to save preferences');
+        } finally {
+            setIsSavingPreferences(false);
+        }
     };
 
     return (
@@ -253,13 +285,14 @@ const Settings: React.FC = () => {
                                 </div>
 
                                 <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    whileHover={{ scale: isSavingPreferences ? 1 : 1.02 }}
+                                    whileTap={{ scale: isSavingPreferences ? 1 : 0.98 }}
                                     onClick={handleSavePreferences}
-                                    className="btn-secondary flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold"
+                                    disabled={isSavingPreferences || isLoadingPreferences}
+                                    className="btn-secondary flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold disabled:cursor-wait disabled:opacity-60"
                                 >
                                     <Save size={18} />
-                                    Save Preferences
+                                    {isSavingPreferences ? 'Saving...' : 'Save Preferences'}
                                 </motion.button>
                             </div>
                         </motion.div>
