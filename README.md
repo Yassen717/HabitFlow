@@ -1,6 +1,11 @@
 # HabitFlow - Smart Habit Tracker
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-habitflow--three.vercel.app-blue?style=for-the-badge)](https://habitflow-three.vercel.app/)
+[![Issues](https://img.shields.io/github/issues/Yassen717/HabitFlow?style=for-the-badge)](https://github.com/Yassen717/HabitFlow/issues)
+
 A professional, full-stack habit tracking application with gamification features. Built with modern web technologies and featuring an enterprise-grade design system.
+
+**🌐 Live at:** [https://habitflow-three.vercel.app/](https://habitflow-three.vercel.app/)
 
 ## 🚀 Features
 
@@ -207,7 +212,13 @@ Smart Habit/
 1. Build: `npm run build`
 2. Deploy `dist` folder
 
-## 📝 License
+## � Issues & Contributing
+
+Found a bug or have a feature request? Open an issue:
+
+👉 [https://github.com/Yassen717/HabitFlow/issues](https://github.com/Yassen717/HabitFlow/issues)
+
+## �📝 License
 
 MIT License - feel free to use for your portfolio
 
