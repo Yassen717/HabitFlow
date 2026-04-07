@@ -82,7 +82,9 @@ const corsOptions = {
       callback(null, true);
     } else {
       logger.warn(`CORS blocked request from origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      const corsError = new Error('Origin not allowed by CORS') as Error & { status?: number };
+      corsError.status = 403;
+      callback(corsError);
     }
   },
   credentials: true, // Allow cookies/auth headers

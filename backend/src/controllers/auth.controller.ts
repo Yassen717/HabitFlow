@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import logger from '../lib/logger';
 import bcrypt from 'bcryptjs';
@@ -10,35 +11,126 @@ const generateRefreshToken = () => {
     return crypto.randomBytes(40).toString('hex');
 };
 
-export const register = async (req: Request, res: Response) => {
-    const { email, password, name } = req.body;
+const sleep = (ms: number) => new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+});
 
-    try {
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
+const isTransientDbError = (error: unknown): boolean => {
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+        return true;
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        return ['P1001', 'P1002', 'P1017', 'P2024'].includes(error.code);
+    }
+
+    return false;
+};
+
+const executeWithDbRetry = async <T>(
+    operation: () => Promise<T>,
+    context: string,
+    maxRetries = 2,
+): Promise<T> => {
+    let attempt = 0;
+
+    while (true) {
+        try {
+            return await operation();
+        } catch (error) {
+            if (!isTransientDbError(error) || attempt >= maxRetries) {
+                throw error;
+            }
+
+            const delayMs = 1000 * (attempt + 1);
+            logger.warn(`${context} failed due to transient database error. Retrying...`, {
+                attempt: attempt + 1,
+                maxRetries,
+                delayMs,
+                error: error instanceof Error ? error.message : String(error),
+            });
+
+            await sleep(delayMs);
+            attempt += 1;
+        }
+    }
+};
+
+const getAuthErrorResponse = (error: unknown, defaultMessage: string): { statusCode: number; message: string } => {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+            return { statusCode: 400, message: 'User already exists' };
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                name,
-            },
+        if (error.code === 'P1001' || error.code === 'P1002' || error.code === 'P1017' || error.code === 'P2024') {
+            return {
+                statusCode: 503,
+                message: 'Database is waking up. Please retry in a few seconds.',
+            };
+        }
+
+        if (error.code === 'P2021' || error.code === 'P2022') {
+            return {
+                statusCode: 500,
+                message: 'Database schema is out of date. Please run migrations and try again.',
+            };
+        }
+    }
+
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+        return {
+            statusCode: 503,
+            message: 'Database is waking up. Please retry in a few seconds.',
+        };
+    }
+
+    return { statusCode: 500, message: defaultMessage };
+};
+
+const logAuthError = (context: string, error: unknown) => {
+    if (error instanceof Error) {
+        logger.error(`${context}: ${error.message}`, {
+            name: error.name,
+            stack: error.stack,
         });
+        return;
+    }
+
+    logger.error(`${context}: Unknown error`, { error });
+};
+
+export const register = async (req: Request, res: Response) => {
+    const { email, password, name } = req.body;
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const refreshToken = generateRefreshToken();
+
+        const user = await executeWithDbRetry(async () => {
+            return prisma.$transaction(async (tx) => {
+                const createdUser = await tx.user.create({
+                    data: {
+                        email: normalizedEmail,
+                        password: hashedPassword,
+                        name,
+                    },
+                });
+
+                await tx.refreshToken.create({
+                    data: {
+                        token: refreshToken,
+                        userId: createdUser.id,
+                        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    },
+                });
+
+                return createdUser;
+            });
+        }, 'register');
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
             expiresIn: '15m', // Short-lived access token
-        });
-
-        const refreshToken = generateRefreshToken();
-        await prisma.refreshToken.create({
-            data: {
-                token: refreshToken,
-                userId: user.id,
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-            },
         });
 
         res.status(201).json({
@@ -48,16 +140,22 @@ export const register = async (req: Request, res: Response) => {
             message: 'Registration successful'
         });
     } catch (error) {
-        logger.error('Error during registration:', error);
-        res.status(500).json({ message: 'Error creating account. Please try again.' });
+        logAuthError('Error during registration', error);
+        const { statusCode, message } = getAuthErrorResponse(error, 'Error creating account. Please try again.');
+        res.status(statusCode).json({ message });
     }
 };
 
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
+    const normalizedEmail = String(email).trim().toLowerCase();
 
     try {
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await executeWithDbRetry(
+            () => prisma.user.findUnique({ where: { email: normalizedEmail } }),
+            'login:user lookup',
+        );
+
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -72,13 +170,15 @@ export const login = async (req: Request, res: Response) => {
         });
 
         const refreshToken = generateRefreshToken();
-        await prisma.refreshToken.create({
-            data: {
-                token: refreshToken,
-                userId: user.id,
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-            },
-        });
+        await executeWithDbRetry(async () => {
+            await prisma.refreshToken.create({
+                data: {
+                    token: refreshToken,
+                    userId: user.id,
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+                },
+            });
+        }, 'login:create refresh token');
 
         res.status(200).json({
             token,
@@ -87,8 +187,9 @@ export const login = async (req: Request, res: Response) => {
             message: 'Login successful'
         });
     } catch (error) {
-        logger.error('Error during login:', error);
-        res.status(500).json({ message: 'Error logging in. Please try again.' });
+        logAuthError('Error during login', error);
+        const { statusCode, message } = getAuthErrorResponse(error, 'Error logging in. Please try again.');
+        res.status(statusCode).json({ message });
     }
 };
 
@@ -148,8 +249,9 @@ export const refreshToken = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        logger.error('Error refreshing token:', error);
-        res.status(500).json({ message: 'Error refreshing token' });
+        logAuthError('Error refreshing token', error);
+        const { statusCode, message } = getAuthErrorResponse(error, 'Error refreshing token');
+        res.status(statusCode).json({ message });
     }
 };
 
