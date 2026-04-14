@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 import logger from './logger';
 
@@ -289,18 +290,21 @@ export const checkAchievements = async (
                 });
 
                 if (dbAchievement) {
-                    await prisma.userAchievement.create({
-                        data: {
-                            userId,
-                            achievementKey: achievement.key,
-                        },
-                    });
+                    try {
+                        await prisma.userAchievement.create({
+                            data: {
+                                userId,
+                                achievementKey: achievement.key,
+                            },
+                        });
+                    } catch (error) {
+                        // Another concurrent request may have unlocked this achievement first.
+                        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                            continue;
+                        }
 
-                    // Award points
-                    await prisma.user.update({
-                        where: { id: userId },
-                        data: { points: { increment: achievement.pointsReward } },
-                    });
+                        throw error;
+                    }
 
                     newlyUnlocked.push({
                         achievement: {

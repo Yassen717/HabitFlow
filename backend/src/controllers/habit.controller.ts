@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import logger from '../lib/logger';
 import { JwtPayload, Log } from '../types';
@@ -122,9 +123,22 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
             totalHabits: habitCount,
         });
 
+        const achievementPoints = newAchievements.reduce((sum, a) => sum + a.pointsAwarded, 0);
+        const userWithUpdatedPoints = achievementPoints > 0
+            ? await prisma.user.update({
+                where: { id: req.user!.userId },
+                data: { points: { increment: achievementPoints } },
+                select: { points: true },
+            })
+            : await prisma.user.findUnique({
+                where: { id: req.user!.userId },
+                select: { points: true },
+            });
+
         res.status(201).json({
             habit,
             newAchievements,
+            userPoints: userWithUpdatedPoints?.points ?? 0,
         });
     } catch (error) {
         logger.error('Error creating habit:', error);
@@ -207,7 +221,6 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
         // Check if habit exists and belongs to user
         const habit = await prisma.habit.findUnique({
             where: { id },
-            include: { logs: true },
         });
 
         if (!habit) {
@@ -218,33 +231,55 @@ export const logHabit = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({ message: 'You do not have permission to log this habit' });
         }
 
-        // Check if habit was already logged today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const alreadyLoggedToday = habit.logs.some((log: Log) => {
-            const logDate = new Date(log.date);
-            logDate.setHours(0, 0, 0, 0);
-            return logDate.getTime() === today.getTime();
-        });
+        const logDate = new Date();
+        logDate.setHours(0, 0, 0, 0);
+        const nextDay = new Date(logDate);
+        nextDay.setDate(nextDay.getDate() + 1);
 
-        if (alreadyLoggedToday) {
-            return res.status(400).json({ message: 'Habit already logged for today' });
-        }
-
-        const log = await prisma.log.create({
-            data: {
+        // Keep explicit guard for environments that haven't applied the unique index migration yet.
+        const existingLog = await prisma.log.findFirst({
+            where: {
                 habitId: id,
-                completed: true,
-                note: note || null, // Store the optional note
+                date: {
+                    gte: logDate,
+                    lt: nextDay,
+                },
             },
         });
 
-        // Update user points for habit completion
-        const updatedUser = await prisma.user.update({
-            where: { id: req.user!.userId },
-            data: { points: { increment: 10 } },
-            select: { points: true },
-        });
+        if (existingLog) {
+            return res.status(400).json({ message: 'Habit already logged for today' });
+        }
+
+        let log: { id: string; habitId: string; date: Date; completed: boolean; note: string | null };
+        let updatedUser: { points: number };
+
+        try {
+            [log, updatedUser] = await prisma.$transaction(async (tx) => {
+                const createdLog = await tx.log.create({
+                    data: {
+                        habitId: id,
+                        date: logDate,
+                        completed: true,
+                        note: note || null,
+                    },
+                });
+
+                const userAfterBasePoints = await tx.user.update({
+                    where: { id: req.user!.userId },
+                    data: { points: { increment: 10 } },
+                    select: { points: true },
+                });
+
+                return [createdLog, userAfterBasePoints] as const;
+            });
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                return res.status(400).json({ message: 'Habit already logged for today' });
+            }
+
+            throw error;
+        }
 
         // Calculate current streak for this habit
         const updatedHabit = await prisma.habit.findUnique({

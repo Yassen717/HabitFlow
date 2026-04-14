@@ -49,6 +49,7 @@ model Log {
 
   @@index([habitId])
   @@index([date])
+  @@unique([habitId, date])
 }
 
 model RefreshToken {
