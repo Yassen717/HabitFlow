@@ -6,7 +6,7 @@ export const achievementService = {
      * Get all available achievements
      */
     getAchievements: async (): Promise<Achievement[]> => {
-        const response = await api.get('/achievements');
+        const response = await api.get('/api/achievements');
         return response.data;
     },
 
@@ -14,7 +14,7 @@ export const achievementService = {
      * Get user's unlocked achievements
      */
     getUserAchievements: async (token: string): Promise<UserAchievement[]> => {
-        const response = await api.get('/achievements/user', {
+        const response = await api.get('/api/achievements/user', {
             headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;

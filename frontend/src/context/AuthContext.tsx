@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import { authService } from '../services/authService';
+import { apiClient } from '../services/api';
 
 interface User {
 
@@ -44,13 +44,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up axios interceptor for automatic token refresh on 401
     useEffect(() => {
-        const interceptor = axios.interceptors.response.use(
+        const interceptor = apiClient.interceptors.response.use(
             (response) => response,
             async (error) => {
-                const originalRequest = error.config;
+                const originalRequest = error.config as (typeof error.config & { _retry?: boolean }) | undefined;
+
+                if (!originalRequest) {
+                    return Promise.reject(error);
+                }
+
+                const requestUrl = String(originalRequest.url || '');
+                const isRefreshRequest = requestUrl.includes('/api/auth/refresh');
 
                 // If 401 and we haven't tried to refresh yet
-                if (error.response?.status === 401 && !originalRequest._retry && refreshToken) {
+                if (error.response?.status === 401 && !originalRequest._retry && refreshToken && !isRefreshRequest) {
                     originalRequest._retry = true;
 
                     // If refresh is already in progress, wait for it
@@ -58,16 +65,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         const success = await refreshPromise.current;
                         if (success) {
                             // Retry the original request with new token
+                            originalRequest.headers = originalRequest.headers || {};
                             originalRequest.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
-                            return axios(originalRequest);
+                            return apiClient(originalRequest);
                         }
                     } else {
                         // Start a new refresh
                         const success = await refreshAccessToken();
                         if (success) {
                             // Retry the original request with new token
+                            originalRequest.headers = originalRequest.headers || {};
                             originalRequest.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
-                            return axios(originalRequest);
+                            return apiClient(originalRequest);
                         }
                     }
                 }
@@ -78,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Cleanup interceptor on unmount
         return () => {
-            axios.interceptors.response.eject(interceptor);
+            apiClient.interceptors.response.eject(interceptor);
         };
     }, [refreshToken]);
 
