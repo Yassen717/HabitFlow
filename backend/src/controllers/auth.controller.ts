@@ -15,6 +15,15 @@ const sleep = (ms: number) => new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
 });
 
+const isLocalDatabaseUrl = () => {
+    const dbUrl = (process.env.DATABASE_URL || '').toLowerCase();
+    return dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1');
+};
+
+const isLocalDevelopmentDb = () => {
+    return process.env.NODE_ENV !== 'production' && isLocalDatabaseUrl();
+};
+
 const isTransientDbError = (error: unknown): boolean => {
     if (error instanceof Prisma.PrismaClientInitializationError) {
         return true;
@@ -33,19 +42,20 @@ const executeWithDbRetry = async <T>(
     maxRetries = 2,
 ): Promise<T> => {
     let attempt = 0;
+    const effectiveMaxRetries = isLocalDevelopmentDb() ? 0 : maxRetries;
 
     while (true) {
         try {
             return await operation();
         } catch (error) {
-            if (!isTransientDbError(error) || attempt >= maxRetries) {
+            if (!isTransientDbError(error) || attempt >= effectiveMaxRetries) {
                 throw error;
             }
 
             const delayMs = 1000 * (attempt + 1);
             logger.warn(`${context} failed due to transient database error. Retrying...`, {
                 attempt: attempt + 1,
-                maxRetries,
+                maxRetries: effectiveMaxRetries,
                 delayMs,
                 error: error instanceof Error ? error.message : String(error),
             });
@@ -63,6 +73,13 @@ const getAuthErrorResponse = (error: unknown, defaultMessage: string): { statusC
         }
 
         if (error.code === 'P1001' || error.code === 'P1002' || error.code === 'P1017' || error.code === 'P2024') {
+            if (isLocalDevelopmentDb()) {
+                return {
+                    statusCode: 503,
+                    message: 'Local PostgreSQL is not running on localhost:5432. Start PostgreSQL or update DATABASE_URL in backend/.env.',
+                };
+            }
+
             return {
                 statusCode: 503,
                 message: 'Database is waking up. Please retry in a few seconds.',
@@ -78,6 +95,13 @@ const getAuthErrorResponse = (error: unknown, defaultMessage: string): { statusC
     }
 
     if (error instanceof Prisma.PrismaClientInitializationError) {
+        if (isLocalDevelopmentDb()) {
+            return {
+                statusCode: 503,
+                message: 'Local PostgreSQL is not running on localhost:5432. Start PostgreSQL or update DATABASE_URL in backend/.env.',
+            };
+        }
+
         return {
             statusCode: 503,
             message: 'Database is waking up. Please retry in a few seconds.',
