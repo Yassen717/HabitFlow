@@ -43,7 +43,7 @@ A professional, full-stack habit tracking application with gamification features
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/Yassen717/HabitFlow.git
 cd HabitFlow
 ```
 
@@ -145,12 +145,10 @@ npm run preview
 - **Effects**: Glass morphism, backdrop blur, premium shadows
 - **Animations**: Subtle, 60fps GPU-accelerated transitions
 
-See [PROFESSIONAL_DESIGN_SYSTEM.md](./PROFESSIONAL_DESIGN_SYSTEM.md) for complete design documentation.
-
 ## 📂 Project Structure
 
 ```
-Smart Habit/
+HabitFlow/
 ├── backend/
 │   ├── prisma/
 │   │   └── schema.prisma
