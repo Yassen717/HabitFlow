@@ -44,7 +44,7 @@ A professional, full-stack habit tracking application with gamification features
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd Smart\ Habit
+cd HabitFlow
 ```
 
 2. **Install dependencies**
@@ -212,13 +212,13 @@ Smart Habit/
 1. Build: `npm run build`
 2. Deploy `dist` folder
 
-## � Issues & Contributing
+## 🐛 Issues & Contributing
 
 Found a bug or have a feature request? Open an issue:
 
 👉 [https://github.com/Yassen717/HabitFlow/issues](https://github.com/Yassen717/HabitFlow/issues)
 
-## �📝 License
+## 📝 License
 
 MIT License - feel free to use for your portfolio
 
